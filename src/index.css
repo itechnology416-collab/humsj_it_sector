@@ -1,0 +1,390 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 85% 50%;
+
+    --radius: 0.5rem;
+
+    /* Netflix-inspired tokens */
+    --netflix-red: 0 85% 50%;
+    --netflix-red-glow: 0 85% 60%;
+    --netflix-dark: 0 0% 4%;
+    --netflix-gray: 0 0% 12%;
+    --netflix-light-gray: 0 0% 25%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(0 85% 50%) 0%, hsl(0 85% 40%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 100%);
+    --gradient-hero: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 10%) 0%, hsl(0 0% 6%) 100%);
+    --gradient-red: linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(0 75% 45%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px -10px hsl(0 85% 50% / 0.4);
+    --shadow-red: 0 4px 30px -4px hsl(0 85% 50% / 0.3);
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 85% 50%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 85% 50%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 85% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .font-display {
+    font-family: 'Bebas Neue', 'Inter', system-ui, sans-serif;
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-dark {
+    background: var(--gradient-dark);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .gradient-red {
+    background: var(--gradient-red);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-red {
+    box-shadow: var(--shadow-red);
+  }
+
+  /* Netflix-style pattern background */
+  .pattern-netflix {
+    background-image: 
+      radial-gradient(ellipse at top, hsl(0 85% 50% / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, hsl(0 0% 0%) 0%, transparent 50%);
+  }
+
+  .pattern-grid {
+    background-image: 
+      linear-gradient(to right, hsl(0 0% 15% / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 15% / 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-gradient-x {
+    animation: gradient-x 3s ease infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out forwards;
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  .font-arabic {
+    font-family: 'Amiri', 'Times New Roman', serif;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Section styling */
+  .section {
+    scroll-snap-align: start;
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.8);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes slideDown {
+    from { 
+      opacity: 0; 
+      transform: translateY(-10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes scaleIn {
+    from { 
+      opacity: 0; 
+      transform: scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+  }
+
+  @keyframes glow {
+    from { 
+      box-shadow: 0 0 20px -5px hsl(0 85% 50% / 0.4);
+    }
+    to { 
+      box-shadow: 0 0 40px -5px hsl(0 85% 50% / 0.8);
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { 
+      box-shadow: 0 0 20px -5px hsl(0 85% 50% / 0.4);
+    }
+    50% { 
+      box-shadow: 0 0 40px -5px hsl(0 85% 50% / 0.6);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+      animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+      transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+      animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+      transform: translate3d(0, -30px, 0);
+    }
+    70% {
+      animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+      transform: translate3d(0, -15px, 0);
+    }
+    90% {
+      transform: translate3d(0,-4px,0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
+  }
+
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+  }
+
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 20px hsl(0 85% 50% / 0.5);
+  }
+
+  /* Red gradient text */
+  .text-gradient-red {
+    background: linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(0 70% 45%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-glow;
+  }
+
+  /* Netflix-style scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 8%);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 25%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 85% 50%);
+  }
+}
