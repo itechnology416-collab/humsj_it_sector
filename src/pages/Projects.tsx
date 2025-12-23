@@ -224,7 +224,7 @@ export default function ProjectsPage() {
   return (
     <PageLayout 
       title="Projects" 
-      subtitle="Manage IT sector projects and development work"
+      subtitle="Manage academic sector projects and educational programs"
       currentPath={location.pathname}
       onNavigate={navigate}
     >

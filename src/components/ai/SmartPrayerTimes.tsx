@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 interface PrayerTime {
   name: string;
   time: string;
-  icon: any;
+  icon: React.ReactNode;
   completed: boolean;
   reminded: boolean;
   optimal: boolean;

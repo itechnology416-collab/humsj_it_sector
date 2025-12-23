@@ -196,9 +196,9 @@ export const useCourses = () => {
   const [useMockData, setUseMockData] = useState(false);
   const { user, isAdmin } = useAuth();
 
-  const checkTableExists = async () => {
+  const checkTableExists = async (): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('courses')
         .select('id')
         .limit(1);
@@ -247,7 +247,7 @@ export const useCourses = () => {
 
       setUseMockData(false);
 
-      let query = supabase
+      let query = (supabase as any)
         .from('courses')
         .select(`
           *,
@@ -279,7 +279,7 @@ export const useCourses = () => {
 
       if (coursesError) throw coursesError;
 
-      const formattedCourses: Course[] = (coursesData || []).map(course => ({
+      const formattedCourses: Course[] = (coursesData || []).map((course: any) => ({
         ...course,
         instructor_name: course.profiles?.full_name || 'Unknown Instructor'
       }));
@@ -288,7 +288,7 @@ export const useCourses = () => {
 
       // Fetch enrollments if user is logged in
       if (user) {
-        let enrollQuery = supabase
+        let enrollQuery = (supabase as any)
           .from('course_enrollments')
           .select(`
             *,
@@ -298,7 +298,7 @@ export const useCourses = () => {
 
         if (!isAdmin) {
           // Regular users only see their own enrollments
-          const { data: profile } = await supabase
+          const { data: profile } = await (supabase as any)
             .from('profiles')
             .select('id')
             .eq('user_id', user.id)
@@ -312,7 +312,7 @@ export const useCourses = () => {
         const { data: enrollmentsData, error: enrollmentsError } = await enrollQuery;
 
         if (!enrollmentsError && enrollmentsData) {
-          const formattedEnrollments: CourseEnrollment[] = enrollmentsData.map(enrollment => ({
+          const formattedEnrollments: CourseEnrollment[] = enrollmentsData.map((enrollment: any) => ({
             ...enrollment,
             course: enrollment.courses,
             student_name: enrollment.profiles?.full_name || 'Unknown Student'
@@ -345,7 +345,7 @@ export const useCourses = () => {
       }
 
       // Get user's profile ID
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('id, full_name')
         .eq('user_id', user.id)
@@ -381,7 +381,7 @@ export const useCourses = () => {
         return newCourse;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('courses')
         .insert([{
           ...courseData,
@@ -439,7 +439,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('courses')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', courseId);
@@ -475,7 +475,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('courses')
         .delete()
         .eq('id', courseId);
@@ -501,7 +501,7 @@ export const useCourses = () => {
       }
 
       // Get user's profile ID
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('id, full_name')
         .eq('user_id', user.id)
@@ -543,7 +543,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('course_enrollments')
         .insert([{
           course_id: courseId,
@@ -563,10 +563,10 @@ export const useCourses = () => {
       }
 
       // Update course student count
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('courses')
         .update({
-          current_students: supabase.sql`current_students + 1`
+          current_students: (supabase as any).sql`current_students + 1`
         })
         .eq('id', courseId);
 
@@ -610,7 +610,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('course_enrollments')
         .update({
           lessons_completed: lessonsCompleted,
@@ -664,7 +664,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('course_enrollments')
         .update({ rating, review })
         .eq('id', enrollmentId);

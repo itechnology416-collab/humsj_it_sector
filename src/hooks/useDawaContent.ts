@@ -274,7 +274,7 @@ export const useDawaContent = () => {
 
       let fileUrl = '';
       let fileSize = 0;
-      let duration = undefined;
+      const duration = undefined;
 
       // Upload file if provided
       if (file) {

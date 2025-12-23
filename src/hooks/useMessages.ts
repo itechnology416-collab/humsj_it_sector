@@ -9,7 +9,7 @@ export interface Message {
   title: string;
   content: string;
   recipients: 'all' | 'members' | 'admins' | 'specific' | 'college';
-  recipient_filter?: Record<string, any>;
+  recipient_filter?: Record<string, unknown>;
   status: 'draft' | 'scheduled' | 'sent' | 'failed';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   scheduled_for?: string;
@@ -42,7 +42,7 @@ export interface MessageTemplate {
   type: Message['type'];
   subject_template: string;
   content_template: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -53,7 +53,7 @@ export interface CreateMessageData {
   title: string;
   content: string;
   recipients: Message['recipients'];
-  recipient_filter?: Record<string, any>;
+  recipient_filter?: Record<string, unknown>;
   priority?: Message['priority'];
   scheduled_for?: string;
 }
@@ -63,7 +63,7 @@ export interface CreateTemplateData {
   type: MessageTemplate['type'];
   subject_template: string;
   content_template: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
 }
 
 export const useMessages = () => {

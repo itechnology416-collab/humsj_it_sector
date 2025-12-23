@@ -102,7 +102,15 @@ export default function AdminMemberManagement() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [newMember, setNewMember] = useState<CreateMemberData>({
+  const [newMember, setNewMember] = useState<CreateMemberData & {
+    student_id?: string;
+    gender?: string;
+    date_of_birth?: string;
+    address?: string;
+    emergency_contact?: string;
+    skills?: string;
+    interests?: string;
+  }>({
     full_name: "",
     email: "",
     phone: "",
@@ -110,7 +118,14 @@ export default function AdminMemberManagement() {
     department: "",
     year: 1,
     intended_role: "member",
-    notes: ""
+    notes: "",
+    student_id: "",
+    gender: "",
+    date_of_birth: "",
+    address: "",
+    emergency_contact: "",
+    skills: "",
+    interests: ""
   });
 
   useEffect(() => {
@@ -128,9 +143,36 @@ export default function AdminMemberManagement() {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newMember.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Validate phone format if provided
+    if (newMember.phone && !/^\+?[\d\s-()]+$/.test(newMember.phone)) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
     setIsAdding(true);
     try {
-      await createMemberInvitation(newMember);
+      // Create the basic member data
+      const memberData: CreateMemberData = {
+        full_name: newMember.full_name,
+        email: newMember.email,
+        phone: newMember.phone,
+        college: newMember.college,
+        department: newMember.department,
+        year: newMember.year,
+        intended_role: newMember.intended_role,
+        notes: `${newMember.notes}${newMember.student_id ? `\nStudent ID: ${newMember.student_id}` : ''}${newMember.gender ? `\nGender: ${newMember.gender}` : ''}${newMember.date_of_birth ? `\nDate of Birth: ${newMember.date_of_birth}` : ''}${newMember.address ? `\nAddress: ${newMember.address}` : ''}${newMember.emergency_contact ? `\nEmergency Contact: ${newMember.emergency_contact}` : ''}${newMember.skills ? `\nSkills: ${newMember.skills}` : ''}${newMember.interests ? `\nInterests: ${newMember.interests}` : ''}`
+      };
+
+      await createMemberInvitation(memberData);
+      
+      // Reset form
       setNewMember({
         full_name: "",
         email: "",
@@ -139,9 +181,17 @@ export default function AdminMemberManagement() {
         department: "",
         year: 1,
         intended_role: "member",
-        notes: ""
+        notes: "",
+        student_id: "",
+        gender: "",
+        date_of_birth: "",
+        address: "",
+        emergency_contact: "",
+        skills: "",
+        interests: ""
       });
       setIsAddModalOpen(false);
+      toast.success("Member invitation created successfully!");
     } catch (error: any) {
       toast.error(error.message || "Failed to add member");
     } finally {
@@ -409,112 +459,203 @@ export default function AdminMemberManagement() {
 
         {/* Add Member Modal */}
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Member</DialogTitle>
               <p className="text-sm text-muted-foreground">
-                Create a member invitation that will be sent to the new member's email.
+                Create a comprehensive member profile. All information will be included in the invitation.
               </p>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      value={newMember.full_name}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, full_name: e.target.value }))}
+                      placeholder="Ahmed Hassan Mohammed"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newMember.email}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="ahmed.hassan@student.haramaya.edu.et"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={newMember.phone}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+251 912 345 678"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="student_id">Student ID</Label>
+                    <Input
+                      id="student_id"
+                      value={newMember.student_id}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, student_id: e.target.value }))}
+                      placeholder="HU/2024/001234"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="gender">Gender</Label>
+                    <Select value={newMember.gender} onValueChange={(value) => setNewMember(prev => ({ ...prev, gender: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="date_of_birth">Date of Birth</Label>
+                    <Input
+                      id="date_of_birth"
+                      type="date"
+                      value={newMember.date_of_birth}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Academic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="college">College *</Label>
+                    <Select value={newMember.college} onValueChange={(value) => setNewMember(prev => ({ ...prev, college: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select college" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {colleges.slice(1).map(college => (
+                          <SelectItem key={college} value={college}>{college}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="department">Department *</Label>
+                    <Input
+                      id="department"
+                      value={newMember.department}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, department: e.target.value }))}
+                      placeholder="Software Engineering"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="year">Academic Year *</Label>
+                    <Select value={newMember.year.toString()} onValueChange={(value) => setNewMember(prev => ({ ...prev, year: parseInt(value) }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1st Year</SelectItem>
+                        <SelectItem value="2">2nd Year</SelectItem>
+                        <SelectItem value="3">3rd Year</SelectItem>
+                        <SelectItem value="4">4th Year</SelectItem>
+                        <SelectItem value="5">5th Year</SelectItem>
+                        <SelectItem value="6">Graduate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="role">Intended Role</Label>
+                    <Select value={newMember.intended_role} onValueChange={(value) => setNewMember(prev => ({ ...prev, intended_role: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(roleConfig).map(([role, config]) => (
+                          <SelectItem key={role} value={role}>{config.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact & Personal Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Contact & Personal Information</h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      value={newMember.address}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="City, Region, Ethiopia"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                    <Input
+                      id="emergency_contact"
+                      value={newMember.emergency_contact}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, emergency_contact: e.target.value }))}
+                      placeholder="Name and phone number of emergency contact"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills & Interests */}
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Skills & Interests</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="skills">Technical Skills</Label>
+                    <Input
+                      id="skills"
+                      value={newMember.skills}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, skills: e.target.value }))}
+                      placeholder="Programming, Design, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="interests">Interests</Label>
+                    <Input
+                      id="interests"
+                      value={newMember.interests}
+                      onChange={(e) => setNewMember(prev => ({ ...prev, interests: e.target.value }))}
+                      placeholder="Islamic studies, Technology, etc."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div>
+                <h4 className="font-semibold mb-3 text-primary">Additional Information</h4>
                 <div>
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={newMember.full_name}
-                    onChange={(e) => setNewMember(prev => ({ ...prev, full_name: e.target.value }))}
-                    placeholder="Ahmed Hassan"
+                  <Label htmlFor="notes">Notes</Label>
+                  <textarea
+                    id="notes"
+                    value={newMember.notes}
+                    onChange={(e) => setNewMember(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Any additional information about the member..."
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background resize-none h-20"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newMember.email}
-                    onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="ahmed@example.com"
-                  />
-                </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={newMember.phone}
-                    onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+251 912 345 678"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="year">Year *</Label>
-                  <Select value={newMember.year.toString()} onValueChange={(value) => setNewMember(prev => ({ ...prev, year: parseInt(value) }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1st Year</SelectItem>
-                      <SelectItem value="2">2nd Year</SelectItem>
-                      <SelectItem value="3">3rd Year</SelectItem>
-                      <SelectItem value="4">4th Year</SelectItem>
-                      <SelectItem value="5">5th Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="college">College *</Label>
-                <Select value={newMember.college} onValueChange={(value) => setNewMember(prev => ({ ...prev, college: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select college" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colleges.slice(1).map(college => (
-                      <SelectItem key={college} value={college}>{college}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="department">Department *</Label>
-                <Input
-                  id="department"
-                  value={newMember.department}
-                  onChange={(e) => setNewMember(prev => ({ ...prev, department: e.target.value }))}
-                  placeholder="Software Engineering"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="role">Role</Label>
-                <Select value={newMember.intended_role} onValueChange={(value) => setNewMember(prev => ({ ...prev, intended_role: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(roleConfig).map(([role, config]) => (
-                      <SelectItem key={role} value={role}>{config.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Input
-                  id="notes"
-                  value={newMember.notes}
-                  onChange={(e) => setNewMember(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Additional information..."
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-4 border-t">
                 <Button 
                   onClick={handleAddMember} 
                   disabled={isAdding}
@@ -523,12 +664,12 @@ export default function AdminMemberManagement() {
                   {isAdding ? (
                     <>
                       <Loader2 size={16} className="animate-spin mr-2" />
-                      Adding...
+                      Creating Invitation...
                     </>
                   ) : (
                     <>
                       <Save size={16} className="mr-2" />
-                      Add Member
+                      Create Member Invitation
                     </>
                   )}
                 </Button>

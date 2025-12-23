@@ -32,7 +32,7 @@ export default function LeadershipPage() {
 
   const executiveLeadership = [
     {
-      name: "Ahmed Hassan",
+      name: "Musab Abdurahman",
       title: "Amir (President)",
       department: "Computer Science",
       year: "4th Year",
@@ -56,14 +56,14 @@ export default function LeadershipPage() {
       color: "from-red-500 to-pink-500"
     },
     {
-      name: "Fatima Ali",
+      name: "Yusuf Usman",
       title: "Vice Amir (Vice President)",
       department: "Information Systems",
       year: "3rd Year", 
       tenure: "2023-2024",
       email: "vice-amir@humsj.edu.et",
       phone: "+251-911-234-567",
-      bio: "Experienced organizer and community builder focused on member engagement and operational excellence. Passionate about empowering Muslim women in technology.",
+      bio: "Experienced organizer and community builder focused on member engagement and operational excellence. Passionate about empowering Muslim students in technology.",
       achievements: [
         "Streamlined operational processes",
         "Improved member satisfaction by 35%",
@@ -83,10 +83,26 @@ export default function LeadershipPage() {
 
   const committees = [
     {
-      name: "IT Sector",
-      head: "Omar Ibrahim",
+      name: "Information Technology Sector",
+      head: "Yusuf Usman",
       members: 12,
       description: "Leading digital transformation and technology innovation for the Jama'a",
+      color: "from-blue-500 to-cyan-500",
+      icon: "💻"
+    },
+    {
+      name: "Academic Sector",
+      head: "Muaz Kedir",
+      members: 10,
+      description: "Leading educational programs and academic support for the Jama'a",
+      color: "from-green-500 to-emerald-500",
+      icon: "🎓"
+    },
+    {
+      name: "Da'wa Committee",
+      head: "Amar",
+      members: 8,
+      description: "Spreading Islamic knowledge and engaging in community outreach activities",
       responsibilities: [
         "System development and maintenance",
         "Digital infrastructure management", 
@@ -105,7 +121,7 @@ export default function LeadershipPage() {
     },
     {
       name: "Da'wa Committee",
-      head: "Aisha Mohamed",
+      head: "Muaz Kedir",
       members: 8,
       description: "Spreading Islamic knowledge and engaging in community outreach activities",
       responsibilities: [
@@ -210,18 +226,28 @@ export default function LeadershipPage() {
     }
   ];
 
-  const itSectorMembers = [
+  const academicSectorMembers = [
     {
-      name: "Omar Ibrahim",
+      name: "Yusuf Usman",
       title: "IT Sector Head",
-      specialization: "Full-Stack Development",
-      department: "Software Engineering",
+      specialization: "Technology Leadership",
+      department: "Information Systems",
       year: "4th Year",
-      skills: ["React", "Node.js", "Python", "Database Design", "System Architecture"],
-      projects: ["HUMSJ Management Platform", "Prayer Time API", "Event Management System"],
-      email: "omar.ibrahim@humsj.edu.et",
-      github: "github.com/omaribrahim",
-      achievements: ["Led platform development", "Mentored 10+ developers", "Open source contributor"]
+      skills: ["System Architecture", "Project Management", "Full-Stack Development", "Team Leadership"],
+      projects: ["HUMSJ Management Platform", "Digital Infrastructure", "Technology Strategy"],
+      email: "yusuf.usman@humsj.edu.et",
+      achievements: ["Led platform development", "Modernized IT infrastructure", "Improved system efficiency"]
+    },
+    {
+      name: "Feysal Hussein Kedir",
+      title: "System Administrator",
+      specialization: "System Administration & Infrastructure",
+      department: "Computer Science",
+      year: "4th Year",
+      skills: ["Linux Administration", "Network Management", "Database Administration", "Security", "Server Management"],
+      projects: ["Server Infrastructure", "Database Management", "System Security", "Backup Solutions"],
+      email: "feysal.hussein@humsj.edu.et",
+      achievements: ["Maintained 99.9% system uptime", "Implemented security protocols", "Optimized server performance"]
     },
     {
       name: "Zainab Ali",
@@ -299,7 +325,7 @@ export default function LeadershipPage() {
     social: {
       website: "https://humsj.edu.et",
       facebook: "facebook.com/humsj",
-      telegram: "t.me/humsj",
+      telegram: "t.me/humsjofficialchannel",
       instagram: "@humsj_official"
     }
   };
@@ -497,7 +523,7 @@ export default function LeadershipPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {itSectorMembers.map((member, index) => (
+              {academicSectorMembers.map((member, index) => (
                 <div 
                   key={member.name}
                   className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/30 transition-all duration-500 hover:scale-105 animate-slide-up"

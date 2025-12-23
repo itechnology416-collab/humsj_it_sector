@@ -4,7 +4,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { 
   BookOpen, 
   Search, 
-  Filter,
   Star,
   Copy,
   Share2,
@@ -12,11 +11,10 @@ import {
   Eye,
   Heart,
   User,
-  Calendar,
   CheckCircle,
-  AlertCircle,
   Volume2,
   Play,
+  Pause,
   Tag,
   Globe,
   Sparkles
@@ -184,6 +182,144 @@ const mockHadiths: Hadith[] = [
     isFavorite: true,
     views: 14200,
     bookmarks: 680
+  },
+  {
+    id: '7',
+    arabicText: 'خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ',
+    englishTranslation: 'The best of people are those who are most beneficial to people.',
+    narrator: 'Jabir ibn Abdullah (RA)',
+    collection: 'ahmad',
+    bookNumber: 3,
+    hadithNumber: 3289,
+    grade: 'sahih',
+    topic: 'Serving Humanity',
+    category: 'social',
+    keywords: ['service', 'benefit', 'humanity', 'goodness'],
+    explanation: 'This hadith emphasizes that the measure of a person\'s worth is how much they benefit others.',
+    context: 'The Prophet\'s teaching on what makes a person truly valuable in Allah\'s sight.',
+    lessons: [
+      'True worth comes from serving others',
+      'Benefit to humanity is a noble goal',
+      'Good deeds should extend beyond oneself'
+    ],
+    isFavorite: true,
+    views: 18750,
+    bookmarks: 920
+  },
+  {
+    id: '8',
+    arabicText: 'خَيْرُ الْأُمُورِ أَوْسَطُهَا',
+    englishTranslation: 'The best of matters are those that are moderate.',
+    narrator: 'Ali ibn Abi Talib (RA)',
+    collection: 'bukhari',
+    bookNumber: 78,
+    hadithNumber: 15,
+    grade: 'sahih',
+    topic: 'Balance and Moderation',
+    category: 'morals',
+    keywords: ['moderation', 'balance', 'middle path', 'wisdom'],
+    explanation: 'Islam teaches the importance of moderation and avoiding extremes in all aspects of life.',
+    context: 'The Prophet\'s guidance on maintaining balance in religious and worldly matters.',
+    lessons: [
+      'Avoid extremes in religion and life',
+      'Moderation leads to sustainability',
+      'Balance is a sign of wisdom'
+    ],
+    isFavorite: false,
+    views: 15600,
+    bookmarks: 780
+  },
+  {
+    id: '9',
+    arabicText: 'إِنَّ الْمُؤْمِنَ لَيُدْرِكُ بِحُسْنِ خُلُقِهِ دَرَجَةَ الصَّائِمِ الْقَائِمِ',
+    englishTranslation: 'Indeed, the believer can reach by his good character the degree of one who fasts and stands in prayer.',
+    narrator: 'Aisha (RA)',
+    collection: 'abudawud',
+    bookNumber: 41,
+    hadithNumber: 4798,
+    grade: 'sahih',
+    topic: 'Good Character',
+    category: 'morals',
+    keywords: ['character', 'akhlaq', 'reward', 'virtue'],
+    explanation: 'This hadith shows that good character can earn the same reward as intensive worship.',
+    context: 'The Prophet\'s emphasis on the importance of moral excellence.',
+    lessons: [
+      'Good character is highly rewarded by Allah',
+      'Moral excellence equals intensive worship',
+      'Character development is essential for believers'
+    ],
+    isFavorite: true,
+    views: 21300,
+    bookmarks: 1150
+  },
+  {
+    id: '10',
+    arabicText: 'فِي كُلِّ كَبِدٍ رَطْبَةٍ أَجْرٌ',
+    englishTranslation: 'In every living being there is a reward (for showing kindness).',
+    narrator: 'Abu Hurairah (RA)',
+    collection: 'bukhari',
+    bookNumber: 59,
+    hadithNumber: 3321,
+    grade: 'sahih',
+    topic: 'Compassion to All Creation',
+    category: 'morals',
+    keywords: ['kindness', 'animals', 'compassion', 'reward'],
+    explanation: 'This hadith teaches that showing kindness to any living creature is rewarded by Allah.',
+    context: 'The Prophet\'s teaching about universal compassion and mercy.',
+    lessons: [
+      'Kindness to animals is rewarded by Allah',
+      'Compassion should extend to all creation',
+      'Every act of mercy has spiritual value'
+    ],
+    isFavorite: false,
+    views: 17890,
+    bookmarks: 890
+  },
+  {
+    id: '11',
+    arabicText: 'الطَّهُورُ شَطْرُ الْإِيمَانِ',
+    englishTranslation: 'Cleanliness is half of faith.',
+    narrator: 'Abu Malik al-Ash\'ari (RA)',
+    collection: 'muslim',
+    bookNumber: 2,
+    hadithNumber: 432,
+    grade: 'sahih',
+    topic: 'Purity and Cleanliness',
+    category: 'worship',
+    keywords: ['cleanliness', 'purity', 'faith', 'hygiene'],
+    explanation: 'This hadith emphasizes that physical and spiritual cleanliness are fundamental to Islamic faith.',
+    context: 'The Prophet\'s teaching on the connection between cleanliness and spirituality.',
+    lessons: [
+      'Cleanliness is essential to faith',
+      'Physical purity reflects spiritual purity',
+      'Hygiene is a religious obligation'
+    ],
+    isFavorite: false,
+    views: 19200,
+    bookmarks: 960
+  },
+  {
+    id: '12',
+    arabicText: 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ',
+    englishTranslation: 'Your smile in the face of your brother is charity for you.',
+    narrator: 'Abu Dharr (RA)',
+    collection: 'tirmidhi',
+    bookNumber: 25,
+    hadithNumber: 1956,
+    grade: 'sahih',
+    topic: 'Simple Acts of Kindness',
+    category: 'social',
+    keywords: ['smile', 'charity', 'kindness', 'brotherhood'],
+    explanation: 'This hadith shows that even simple acts like smiling are considered charitable deeds in Islam.',
+    context: 'The Prophet\'s teaching on how easy it is to earn reward through kindness.',
+    lessons: [
+      'Simple acts of kindness are rewarded',
+      'A smile is a form of charity',
+      'Small gestures have great spiritual value'
+    ],
+    isFavorite: true,
+    views: 23400,
+    bookmarks: 1200
   }
 ];
 

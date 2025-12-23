@@ -1,0 +1,21 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Minaret -->
+  <rect x="15" y="30" width="8" height="60" fill="#1DB584" rx="1"/>
+  <rect x="13" y="28" width="12" height="4" fill="#1DB584" rx="2"/>
+  <circle cx="19" cy="26" r="3" fill="#1DB584"/>
+  
+  <!-- Mosque Dome -->
+  <path d="M35 45 Q60 25 85 45 L85 65 Q60 75 35 65 Z" fill="none" stroke="#1DB584" stroke-width="4"/>
+  
+  <!-- Crescent and Star -->
+  <path d="M65 20 Q75 15 80 25 Q75 35 65 30 Q70 25 65 20 Z" fill="#1DB584"/>
+  <polygon points="72,22 74,26 78,26 75,29 76,33 72,30 68,33 69,29 66,26 70,26" fill="#1DB584"/>
+  
+  <!-- HUMSJ Text -->
+  <text x="30" y="100" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1DB584">HUMSJ</text>
+  
+  <!-- Book/Hands -->
+  <path d="M25 75 Q35 70 45 75 L45 85 Q35 90 25 85 Z" fill="none" stroke="#1DB584" stroke-width="2"/>
+  <path d="M55 75 Q65 70 75 75 L75 85 Q65 90 55 85 Z" fill="none" stroke="#1DB584" stroke-width="2"/>
+  <path d="M75 80 Q85 75 95 80 L95 85 Q85 90 75 85" fill="none" stroke="#1DB584" stroke-width="2"/>
+</svg>

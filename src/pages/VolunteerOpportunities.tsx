@@ -31,7 +31,7 @@ const availableOpportunities = [
   {
     id: 1,
     title: "IT Support Volunteer",
-    organization: "IT Sector",
+    organization: "Academic Sector",
     description: "Help maintain computer systems and provide technical support to members",
     category: "Technology",
     timeCommitment: "4 hours/week",

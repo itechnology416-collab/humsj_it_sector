@@ -5,6 +5,10 @@ import { useAI } from "@/contexts/AIContext";
 import { PageLayout } from "@/components/layout/PageLayout";
 import SmartRecommendations from "@/components/ai/SmartRecommendations";
 import SmartPrayerTimes from "@/components/ai/SmartPrayerTimes";
+import { IslamicProgramsSchedule } from "@/components/islamic/IslamicProgramsSchedule";
+import { PrayerReminderWidget } from "@/components/islamic/PrayerReminderWidget";
+import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
+import IslamicSidebarWidget from "@/components/islamic/IslamicSidebarWidget";
 import { 
   Calendar, 
   Bell, 
@@ -40,7 +44,7 @@ const upcomingEvents = [
 ];
 
 const notifications = [
-  { id: 1, title: "New announcement from IT Sector", time: "2 hours ago", read: false },
+  { id: 1, title: "New announcement from Academic Sector", time: "2 hours ago", read: false },
   { id: 2, title: "Ramadan program schedule released", time: "Yesterday", read: false },
   { id: 3, title: "Your attendance was recorded", time: "2 days ago", read: true },
 ];
@@ -62,6 +66,35 @@ export default function UserDashboard() {
       navigate("/auth");
     }
   }, [user, isLoading, navigate]);
+
+  // Check for gender preference and redirect to appropriate dashboard
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Admins bypass automatic gender routing and stay on main dashboard
+      if (isAdmin) {
+        return; // Let admins stay on the main dashboard
+      }
+
+      const userGender = localStorage.getItem('userGender');
+      const profileGender = profile?.gender;
+      
+      // If user has a gender preference, redirect to appropriate dashboard
+      if (userGender === 'male') {
+        navigate('/male-dashboard', { replace: true });
+      } else if (userGender === 'female') {
+        navigate('/female-dashboard', { replace: true });
+      } else if (profileGender === 'male') {
+        localStorage.setItem('userGender', 'male');
+        navigate('/male-dashboard', { replace: true });
+      } else if (profileGender === 'female') {
+        localStorage.setItem('userGender', 'female');
+        navigate('/female-dashboard', { replace: true });
+      } else {
+        // No gender preference set, redirect to gender selection
+        navigate('/gender-selection', { replace: true });
+      }
+    }
+  }, [user, profile, isLoading, isAdmin, navigate]);
 
   if (isLoading) {
     return (
@@ -89,8 +122,12 @@ export default function UserDashboard() {
                 <Home size={24} className="text-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-display tracking-wide">My Dashboard</h2>
-                <p className="text-sm text-muted-foreground">Your personal hub</p>
+                <h2 className="text-2xl font-display tracking-wide">
+                  {isAdmin ? "Admin Dashboard" : "My Dashboard"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {isAdmin ? "Administrative control panel" : "Your personal hub"}
+                </p>
               </div>
             </div>
           </div>
@@ -115,6 +152,108 @@ export default function UserDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Admin Gender Dashboard Access */}
+        {isAdmin && (
+          <div className="bg-gradient-to-r from-amber-500/10 via-card to-orange-500/10 rounded-xl p-6 border border-amber-500/20">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-xl bg-amber-500/20 flex items-center justify-center animate-pulse">
+                <Shield size={32} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-display tracking-wide mb-2">Admin Dashboard Access</h3>
+                <p className="text-muted-foreground">
+                  As an administrator, you have access to both gender-specific dashboards for oversight and management purposes.
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Male Dashboard Access */}
+              <div className="bg-card rounded-xl p-6 border border-border/30 hover:border-green-500/50 transition-all duration-300 hover:scale-105 group">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                    <User size={24} className="text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold">Brother's Dashboard</h4>
+                    <p className="text-sm text-muted-foreground">Male student dashboard view</p>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-green-600" />
+                    <span>Leadership & Community Features</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-green-600" />
+                    <span>Brotherhood Engagement Tools</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-green-600" />
+                    <span>Committee Management</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/male-dashboard')}
+                  className="w-full bg-green-600 hover:bg-green-700 shadow-lg gap-2"
+                >
+                  <User size={16} />
+                  View Brother's Dashboard
+                </Button>
+              </div>
+
+              {/* Female Dashboard Access */}
+              <div className="bg-card rounded-xl p-6 border border-border/30 hover:border-rose-500/50 transition-all duration-300 hover:scale-105 group">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500/20 flex items-center justify-center group-hover:bg-rose-500/30 transition-colors">
+                    <Heart size={24} className="text-rose-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold">Sister's Dashboard</h4>
+                    <p className="text-sm text-muted-foreground">Female student dashboard view</p>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-rose-600" />
+                    <span>Sisterhood & Mentorship</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-rose-600" />
+                    <span>Privacy-First Environment</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle size={12} className="text-rose-600" />
+                    <span>Well-being Support</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/female-dashboard')}
+                  className="w-full bg-rose-600 hover:bg-rose-700 shadow-lg gap-2"
+                >
+                  <Heart size={16} />
+                  View Sister's Dashboard
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <div className="flex items-start gap-3">
+                <Shield size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-1">
+                    Administrative Access Notice
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-300">
+                    This access is provided for administrative oversight, member support, and system management. 
+                    Please respect the privacy and Islamic principles governing these spaces.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Profile Summary */}
         <div className="relative overflow-hidden bg-gradient-to-r from-primary/20 via-card to-primary/10 rounded-xl p-6 border border-primary/30">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -218,6 +357,12 @@ export default function UserDashboard() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Islamic Educational Content - Between Stats and Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <IslamicEducationFiller type="verse" size="medium" />
+          <IslamicSidebarWidget variant="daily-verse" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -326,11 +471,11 @@ export default function UserDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               { label: "Learning Center", icon: BookOpen, path: "/learning-center", color: "text-blue-400", bg: "bg-blue-500/10" },
-              { label: "Quran Tracker", icon: Star, path: "/quran-tracker", color: "text-green-400", bg: "bg-green-500/10" },
-              { label: "My Events", icon: Calendar, path: "/my-events", color: "text-purple-400", bg: "bg-purple-500/10" },
-              { label: "Volunteer", icon: Heart, path: "/volunteer-opportunities", color: "text-red-400", bg: "bg-red-500/10" },
-              { label: "AI Insights", icon: Brain, path: "/ai-insights", color: "text-purple-400", bg: "bg-purple-500/10" },
-              { label: "My Tasks", icon: CheckCircle, path: "/my-tasks", color: "text-indigo-400", bg: "bg-indigo-500/10" }
+              { label: "Quran Audio", icon: Star, path: "/quran-audio", color: "text-green-400", bg: "bg-green-500/10" },
+              { label: "Prayer Tracker", icon: Clock, path: "/prayer-tracker", color: "text-purple-400", bg: "bg-purple-500/10" },
+              { label: "Digital Tasbih", icon: Heart, path: "/dhikr-counter", color: "text-red-400", bg: "bg-red-500/10" },
+              { label: "AI Voice", icon: Bot, path: "/ai-voice-assistant", color: "text-amber-400", bg: "bg-amber-500/10" },
+              { label: "AI Insights", icon: Brain, path: "/ai-insights", color: "text-purple-400", bg: "bg-purple-500/10" }
             ].map((action, index) => (
               <button
                 key={action.label}
@@ -346,7 +491,7 @@ export default function UserDashboard() {
                     <action.icon className={cn("h-6 w-6", action.color)} />
                   </div>
                   <span className="text-sm font-medium group-hover:text-primary transition-colors">{action.label}</span>
-                  {action.label === "AI Insights" && (
+                  {(action.label === "AI Insights" || action.label === "AI Voice") && (
                     <div className="flex items-center gap-1">
                       <Sparkles size={10} className="text-purple-400" />
                       <span className="text-xs text-purple-400">AI</span>
@@ -393,6 +538,11 @@ export default function UserDashboard() {
           {/* Smart Prayer Times */}
           <div className="lg:col-span-1">
             <SmartPrayerTimes showAIInsights={true} />
+          </div>
+
+          {/* Prayer Reminders */}
+          <div className="lg:col-span-1">
+            <PrayerReminderWidget />
           </div>
 
           {/* Community & Participation */}
@@ -452,6 +602,9 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Islamic Programs Schedule */}
+        <IslamicProgramsSchedule className="mt-8" />
       </div>
     </PageLayout>
   );

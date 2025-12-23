@@ -49,7 +49,7 @@ const registeredEvents = [
     status: "confirmed",
     attendance: "pending",
     type: "workshop",
-    organizer: "IT Sector",
+    organizer: "Academic Sector",
     description: "Learn modern web development techniques",
     certificate: false,
     feedback: false

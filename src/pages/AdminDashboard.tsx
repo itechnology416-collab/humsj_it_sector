@@ -6,6 +6,10 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import AdminAIInsights from "@/components/ai/AdminAIInsights";
 import AdminMemberAnalytics from "@/components/ai/AdminMemberAnalytics";
 import SmartRecommendations from "@/components/ai/SmartRecommendations";
+import { IslamicProgramsSchedule } from "@/components/islamic/IslamicProgramsSchedule";
+import { PrayerReminderWidget } from "@/components/islamic/PrayerReminderWidget";
+import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
+import IslamicSidebarWidget from "@/components/islamic/IslamicSidebarWidget";
 import { 
   Users, 
   Shield, 
@@ -22,7 +26,11 @@ import {
   ArrowLeft,
   Sparkles,
   Brain,
-  Bot
+  Bot,
+  UserCheck,
+  Camera,
+  Store,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -134,6 +142,14 @@ export default function AdminDashboard() {
               User Management
             </Button>
             <Button
+              variant="outline"
+              onClick={() => navigate("/admin-media")}
+              className="border-border/50 hover:border-primary hover:bg-primary/5 gap-2"
+            >
+              <Camera size={16} />
+              Media Management
+            </Button>
+            <Button
               onClick={() => navigate("/analytics")}
               className="bg-primary hover:bg-primary/90 shadow-red gap-2"
             >
@@ -240,6 +256,13 @@ export default function AdminDashboard() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Islamic Educational Content - Between Stats and Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <IslamicEducationFiller type="dua" size="medium" />
+          <IslamicSidebarWidget variant="islamic-calendar" />
+          <IslamicEducationFiller type="tip" size="medium" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -463,47 +486,21 @@ export default function AdminDashboard() {
             </Button>
           </div>
 
-          {/* System Health */}
-          <div className="bg-card rounded-xl p-5 border border-border/30">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-lg tracking-wide flex items-center gap-2">
-                <Activity size={18} className="text-primary" />
-                System Health
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/system-status")} className="text-primary hover:text-primary">
-                View Details
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: "Database", status: "Operational", color: "bg-green-500", icon: CheckCircle },
-                { label: "API Services", status: "Operational", color: "bg-green-500", icon: CheckCircle },
-                { label: "Authentication", status: "Operational", color: "bg-green-500", icon: CheckCircle },
-                { label: "File Storage", status: "Operational", color: "bg-green-500", icon: CheckCircle },
-                { label: "Email Service", status: "Degraded", color: "bg-amber-500", icon: AlertTriangle }
-              ].map((service, index) => (
-                <div key={index} className="group flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors">
-                  <div className={cn("w-2 h-2 rounded-full", service.color)} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{service.label}</p>
-                    <p className="text-xs text-muted-foreground">{service.status}</p>
-                  </div>
-                  <service.icon size={16} className={cn(
-                    service.status === "Operational" ? "text-green-400" : "text-amber-400"
-                  )} />
-                </div>
-              ))}
-            </div>
+          {/* Prayer Reminders */}
+          <div>
+            <PrayerReminderWidget />
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: "AI Insights", icon: Brain, path: "/ai-insights", color: "bg-purple-500/20 text-purple-400" },
             { label: "Member Management", icon: Users, path: "/admin-members", color: "bg-primary/20 text-primary" },
-            { label: "Events", icon: Calendar, path: "/events", color: "bg-amber-500/20 text-amber-400" },
-            { label: "Analytics", icon: BarChart3, path: "/analytics", color: "bg-blue-500/20 text-blue-400" },
+            { label: "User Approval", icon: UserCheck, path: "/admin-user-approval", color: "bg-green-500/20 text-green-400" },
+            { label: "Halal Marketplace", icon: Store, path: "/halal-marketplace", color: "bg-blue-500/20 text-blue-400" },
+            { label: "Islamic Notifications", icon: Bell, path: "/islamic-notifications", color: "bg-amber-500/20 text-amber-400" },
+            { label: "Analytics", icon: BarChart3, path: "/analytics", color: "bg-red-500/20 text-red-400" },
           ].map((action, index) => (
             <Button
               key={action.label}
@@ -525,6 +522,9 @@ export default function AdminDashboard() {
             </Button>
           ))}
         </div>
+
+        {/* Islamic Programs Schedule */}
+        <IslamicProgramsSchedule className="mt-8" />
       </div>
     </PageLayout>
   );

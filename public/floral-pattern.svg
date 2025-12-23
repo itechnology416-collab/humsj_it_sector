@@ -1,0 +1,12 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="floralPattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+      <circle cx="25" cy="25" r="3" fill="#10b981" opacity="0.1"/>
+      <path d="M25 15 Q30 20 25 25 Q20 20 25 15" fill="#059669" opacity="0.15"/>
+      <path d="M25 35 Q30 30 25 25 Q20 30 25 35" fill="#059669" opacity="0.15"/>
+      <path d="M15 25 Q20 20 25 25 Q20 30 15 25" fill="#059669" opacity="0.15"/>
+      <path d="M35 25 Q30 20 25 25 Q30 30 35 25" fill="#059669" opacity="0.15"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#floralPattern)"/>
+</svg>

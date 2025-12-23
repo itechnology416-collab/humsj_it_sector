@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { BackToDashboard } from "@/components/layout/BackToDashboard";
@@ -17,12 +17,23 @@ interface PageLayoutProps {
 
 export function PageLayout({ children, title, subtitle, currentPath, onNavigate }: PageLayoutProps) {
   const { toggleAIAssistant, isAIAssistantOpen } = useAI();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background pattern-netflix pattern-grid">
-      <Sidebar currentPath={currentPath} onNavigate={onNavigate} />
+      <Sidebar 
+        currentPath={currentPath} 
+        onNavigate={onNavigate}
+        onCollapseChange={setSidebarCollapsed}
+      />
       
-      <main className="ml-64 min-h-screen">
+      <main 
+        className={cn(
+          "min-h-screen relative z-10 transition-all duration-300",
+          "main-content-offset",
+          sidebarCollapsed && "main-content-offset-collapsed"
+        )}
+      >
         <Header title={title} subtitle={subtitle} />
         
         <div className="p-6">

@@ -112,7 +112,7 @@ const mockTickets: SupportTicket[] = [
     status: "resolved",
     requester: "Omar Ibrahim",
     requester_email: "omar.ibrahim@humsj.edu.et",
-    assigned_to: "System Admin",
+    assigned_to: "Feysal Hussein Kedir (System Admin)",
     created_at: "2024-02-19T16:20:00Z",
     updated_at: "2024-02-20T08:30:00Z",
     resolved_at: "2024-02-20T08:30:00Z",
@@ -120,7 +120,7 @@ const mockTickets: SupportTicket[] = [
     comments: [
       {
         id: "2",
-        author: "System Admin",
+        author: "Feysal Hussein Kedir (System Admin)",
         content: "Account has been unlocked. Please reset your password using the forgot password link.",
         created_at: "2024-02-20T08:30:00Z",
         is_internal: false

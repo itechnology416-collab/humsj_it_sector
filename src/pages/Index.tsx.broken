@@ -135,8 +135,8 @@ export default function Index() {
 
   const testimonials = [
     {
-      name: "Ahmed Hassan",
-      role: "IT Sector Head",
+      name: "Yusuf Usman",
+      role: "Academic Sector Coordinator",
       image: "/placeholder.svg",
       quote: "This system has revolutionized how we manage our Jama'a. The efficiency gains are remarkable, and member engagement has increased by 300%."
     },
@@ -339,7 +339,7 @@ export default function Index() {
                 },
                 {
                   title: "Leadership",
-                  description: "Amir, committees, IT sector members, and contact profiles",
+                  description: "Amir, committees, academic sector members, and contact profiles",
                   features: ["Amir & Vice Amir", "Committee members", "Contact information", "Organizational chart"],
                   icon: "👥",
                   color: "from-purple-500 to-violet-500",
@@ -461,7 +461,7 @@ export default function Index() {
           {/* IT Sector Specific Pages */}
           <div className="mb-16">
             <h3 className="text-3xl font-display tracking-wide text-center mb-12">
-              IT Sector <span className="text-secondary">Management</span>
+              Academic & Education <span className="text-secondary">Management</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
@@ -2008,7 +2008,7 @@ export default function Index() {
 
           <div className="border-t border-border/30 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 HUMSJ Information Technology Sector. All rights reserved. Built with ❤️ for the Islamic community.
+              © 2024 HUMSJ Information Technology Sector. All rights reserved. Developed for the Islamic community.
             </p>
             <p className="text-sm text-muted-foreground font-arabic">
               "وتعاونوا على البر والتقوى ولا تعاونوا على الإثم والعدوان"

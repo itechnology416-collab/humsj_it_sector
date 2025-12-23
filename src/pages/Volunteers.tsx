@@ -118,7 +118,7 @@ const opportunities: VolunteerOpportunity[] = [
     volunteersRegistered: 2,
     skills: ["Programming", "System Administration", "Troubleshooting"],
     impact: "Maintain digital infrastructure serving 500+ community members",
-    coordinator: "Yusuf Abdalla",
+    coordinator: "Feysal Hussein Kedir",
     isUrgent: false,
     icon: "💻"
   },

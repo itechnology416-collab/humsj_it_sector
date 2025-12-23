@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PublicPageLayout } from "@/components/layout/PublicPageLayout";
+import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
+import IslamicSidebarWidget from "@/components/islamic/IslamicSidebarWidget";
 import { 
   Mail, 
   Phone, 
@@ -18,7 +20,9 @@ import {
   Linkedin,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  Heart,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -96,7 +100,7 @@ export default function ContactPage() {
       name: "Events & Activities",
       email: "events@humsj.edu.et",
       phone: "+251-25-553-0013",
-      head: "Ahmed Hassan"
+      head: "Yusuf Usman"
     },
     {
       name: "Education & Da'wa",
@@ -117,13 +121,14 @@ export default function ContactPage() {
     { name: "Twitter", icon: Twitter, url: "https://twitter.com/humsj", color: "bg-blue-400 hover:bg-blue-500" },
     { name: "Instagram", icon: Instagram, url: "https://instagram.com/humsj", color: "bg-pink-600 hover:bg-pink-700" },
     { name: "YouTube", icon: Youtube, url: "https://youtube.com/humsj", color: "bg-red-600 hover:bg-red-700" },
-    { name: "LinkedIn", icon: Linkedin, url: "https://linkedin.com/company/humsj", color: "bg-blue-700 hover:bg-blue-800" }
+    { name: "LinkedIn", icon: Linkedin, url: "https://linkedin.com/company/humsj", color: "bg-blue-700 hover:bg-blue-800" },
+    { name: "Telegram", icon: MessageCircle, url: "https://t.me/humsjofficialchannel", color: "bg-blue-500 hover:bg-blue-600" }
   ];
 
   return (
-    <PageLayout 
+    <PublicPageLayout 
       title="Contact Us" 
-      subtitle="Get in touch with HUMSJ IT Sector team"
+      subtitle="Get in touch with HUMSJ Academic Sector team"
       currentPath={location.pathname}
       onNavigate={navigate}
     >
@@ -163,6 +168,13 @@ export default function ContactPage() {
               <p className="text-xs text-muted-foreground">{info.description}</p>
             </div>
           ))}
+        </div>
+
+        {/* Islamic Educational Content - Between Contact Info and Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <IslamicEducationFiller type="dua" size="medium" />
+          <IslamicSidebarWidget variant="prayer-times" />
+          <IslamicEducationFiller type="tip" size="medium" />
         </div>
 
         {/* Main Content Grid */}
@@ -307,6 +319,113 @@ export default function ContactPage() {
               </div>
             </div>
 
+            {/* HUMSJ Information Channels */}
+            <div className="bg-card rounded-xl p-8 border border-border/30">
+              <h3 className="text-xl font-display tracking-wide mb-6">HUMSJ Information Channels</h3>
+              <p className="text-muted-foreground mb-6">
+                Connect with different HUMSJ sectors through our official Telegram channels for specialized information and updates.
+              </p>
+              <div className="space-y-3">
+                {[
+                  {
+                    name: "Academic Sector",
+                    description: "Academic programs, scholarships, and educational resources",
+                    url: "https://t.me/HUMSJ_accdamic",
+                    icon: "🎓"
+                  },
+                  {
+                    name: "Information & Technology Sector",
+                    description: "IT services, technical support, and digital solutions",
+                    url: "https://t.me/Information_sector_of_Humsj",
+                    icon: "💻"
+                  },
+                  {
+                    name: "Da'ewa & Irshad Sector (Amharic)",
+                    description: "Islamic guidance and education in Amharic language",
+                    url: "https://t.me/HRUMUSLIMSTUDENTSJEMEA",
+                    icon: "📚"
+                  },
+                  {
+                    name: "Da'ewa & Irshad Sector (Afaan Oromoo)",
+                    description: "Islamic guidance and education in Afaan Oromoo language",
+                    url: "https://t.me/HUMSJsectoroffajrulislam",
+                    icon: "📖"
+                  },
+                  {
+                    name: "External Affairs Sector",
+                    description: "External partnerships, collaborations, and outreach programs",
+                    url: "https://t.me/+VMJzgG5c24djM2Rk",
+                    icon: "🤝"
+                  },
+                  {
+                    name: "Comparative Religion Sector",
+                    description: "Interfaith dialogue and comparative religious studies",
+                    url: "https://t.me/HUMSJComparative",
+                    icon: "🕊️"
+                  }
+                ].map((channel) => (
+                  <a
+                    key={channel.name}
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-4 p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-all hover:scale-[1.02] group"
+                  >
+                    <div className="text-2xl flex-shrink-0 mt-1">
+                      {channel.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                        {channel.name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {channel.description}
+                      </p>
+                    </div>
+                    <MessageCircle size={16} className="text-blue-500 flex-shrink-0 mt-1 opacity-70 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-border/30">
+                <h4 className="font-semibold mb-3 text-sm">Additional Sectors</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    {
+                      name: "Beytal Maal (Financial Sector)",
+                      description: "Financial services and support",
+                      icon: "💰"
+                    },
+                    {
+                      name: "Social Affairs Sector",
+                      description: "Community welfare and social programs",
+                      icon: "🤲"
+                    }
+                  ].map((sector) => (
+                    <div
+                      key={sector.name}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-secondary/20"
+                    >
+                      <div className="text-lg flex-shrink-0">
+                        {sector.icon}
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-sm mb-1">
+                          {sector.name}
+                        </h5>
+                        <p className="text-xs text-muted-foreground">
+                          {sector.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 italic">
+                  Contact us for information about these sectors
+                </p>
+              </div>
+            </div>
+
             {/* Social Media */}
             <div className="bg-card rounded-xl p-8 border border-border/30">
               <h3 className="text-xl font-display tracking-wide mb-6">Follow Us</h3>
@@ -326,6 +445,35 @@ export default function ContactPage() {
                     {social.name}
                   </a>
                 ))}
+              </div>
+            </div>
+
+            {/* Educational Resources */}
+            <div className="bg-card rounded-xl p-8 border border-border/30">
+              <h3 className="text-xl font-display tracking-wide mb-6">Educational Resources</h3>
+              <p className="text-muted-foreground mb-6">
+                Access valuable Islamic educational content from renowned scholars and institutions.
+              </p>
+              <div className="space-y-4">
+                <a
+                  href="https://www.youtube.com/@Drzakirchannel"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200 dark:border-red-800 hover:scale-[1.02] transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
+                    <Youtube size={24} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-red-800 dark:text-red-200 mb-1 group-hover:text-red-600 dark:group-hover:text-red-300 transition-colors">
+                      Dr. Zakir Naik Channel
+                    </h4>
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      Islamic lectures, Q&A sessions, and comparative religion discussions
+                    </p>
+                  </div>
+                  <ExternalLink size={16} className="text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
+                </a>
               </div>
             </div>
 
@@ -392,7 +540,214 @@ export default function ContactPage() {
             ))}
           </div>
         </div>
+
+        {/* Islamic Communication Ethics */}
+        <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 rounded-3xl p-8 border border-green-500/20 mt-12">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <MessageCircle size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Islamic Communication Ethics</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding the Islamic principles that guide respectful and effective communication
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Speaking with Wisdom */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">🗣️</span>
+                Speaking with Wisdom (Hikmah)
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                  <h4 className="font-semibold text-primary mb-2">Quranic Guidance</h4>
+                  <p className="text-lg font-arabic text-right mb-2 text-green-600">
+                    وَقُولُوا لِلنَّاسِ حُسْنًا
+                  </p>
+                  <p className="text-sm italic text-muted-foreground mb-2">
+                    "And speak to people good [words]"
+                  </p>
+                  <p className="text-xs text-accent font-medium">- Quran 2:83</p>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    {
+                      principle: "Choose Kind Words",
+                      description: "Select words that are gentle and beneficial",
+                      hadith: "A good word is charity"
+                    },
+                    {
+                      principle: "Listen Actively",
+                      description: "Give full attention to the speaker",
+                      hadith: "Allah loves, when one of you does a job, that he does it with excellence"
+                    },
+                    {
+                      principle: "Speak Truthfully",
+                      description: "Always be honest and accurate in communication",
+                      hadith: "Truthfulness leads to righteousness"
+                    },
+                    {
+                      principle: "Avoid Harmful Speech",
+                      description: "Refrain from gossip, backbiting, and hurtful words",
+                      hadith: "Whoever believes in Allah and the Last Day should speak good or remain silent"
+                    }
+                  ].map((item, idx) => (
+                    <div key={idx} className="bg-white/5 rounded-lg p-3">
+                      <h5 className="font-semibold text-sm text-primary mb-1">{item.principle}</h5>
+                      <p className="text-xs text-muted-foreground mb-2">{item.description}</p>
+                      <p className="text-xs italic text-accent">"{item.hadith}"</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Digital Communication */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">💬</span>
+                Digital Communication Ethics
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                  <h4 className="font-semibold text-primary mb-2">Modern Application</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Applying timeless Islamic principles to modern digital communication methods
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    {
+                      medium: "Email Communication",
+                      guidelines: ["Start with Islamic greeting", "Be clear and concise", "Respond promptly", "Use respectful tone"],
+                      islamicBasis: "Fulfilling promises and being trustworthy"
+                    },
+                    {
+                      medium: "Social Media",
+                      guidelines: ["Share beneficial content", "Avoid controversial topics", "Respect privacy", "Verify before sharing"],
+                      islamicBasis: "Speaking good or remaining silent"
+                    },
+                    {
+                      medium: "Phone Calls",
+                      guidelines: ["Choose appropriate times", "Be mindful of duration", "Speak clearly", "End with good wishes"],
+                      islamicBasis: "Consideration for others' time and circumstances"
+                    },
+                    {
+                      medium: "Text Messages",
+                      guidelines: ["Use proper language", "Avoid misunderstandings", "Respond reasonably", "Be patient with replies"],
+                      islamicBasis: "Patience and good character in all dealings"
+                    }
+                  ].map((item, idx) => (
+                    <div key={idx} className="bg-white/5 rounded-lg p-3">
+                      <h5 className="font-semibold text-sm text-primary mb-2">{item.medium}</h5>
+                      <ul className="text-xs space-y-1 mb-2">
+                        {item.guidelines.map((guideline, gIdx) => (
+                          <li key={gIdx} className="flex items-center gap-2">
+                            <CheckCircle size={10} className="text-accent" />
+                            {guideline}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs italic text-muted-foreground">
+                        <strong>Islamic Basis:</strong> {item.islamicBasis}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Community Feedback & Suggestions */}
+        <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-blue-500/20">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Heart size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Community Feedback & Continuous Improvement</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              The Islamic principle of Shura (consultation) guides our commitment to community input and continuous improvement
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                aspect: "Shura (Consultation)",
+                description: "Seeking community input on important decisions",
+                quranicBasis: "And those who have responded to their lord and established prayer and whose affair is [determined by] consultation among themselves",
+                reference: "Quran 42:38",
+                applications: [
+                  "Regular community surveys",
+                  "Open feedback sessions",
+                  "Suggestion boxes",
+                  "Committee consultations"
+                ],
+                icon: "🤝",
+                color: "from-green-500 to-emerald-500"
+              },
+              {
+                aspect: "Constructive Criticism",
+                description: "Providing feedback with the intention of improvement",
+                propheticGuidance: "The believer is a mirror to his brother",
+                reference: "Abu Dawud",
+                applications: [
+                  "Respectful feedback forms",
+                  "Private constructive discussions",
+                  "Solution-oriented suggestions",
+                  "Follow-up on improvements"
+                ],
+                icon: "🔍",
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                aspect: "Continuous Learning",
+                description: "Always seeking to improve and serve better",
+                islamicPrinciple: "And say: My Lord, increase me in knowledge",
+                reference: "Quran 20:114",
+                applications: [
+                  "Regular training programs",
+                  "Skill development workshops",
+                  "Best practice sharing",
+                  "Innovation initiatives"
+                ],
+                icon: "📈",
+                color: "from-purple-500 to-violet-500"
+              }
+            ].map((aspect, idx) => (
+              <div key={idx} className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30 hover:scale-105 transition-transform duration-300">
+                <div className="text-center mb-4">
+                  <span className="text-3xl mb-2 block">{aspect.icon}</span>
+                  <h3 className="text-lg font-semibold text-primary">{aspect.aspect}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">{aspect.description}</p>
+                <div className="bg-secondary/20 rounded-lg p-3 mb-4">
+                  <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                    "{aspect.quranicBasis || aspect.propheticGuidance || aspect.islamicPrinciple}"
+                  </blockquote>
+                  <p className="text-xs text-accent font-medium">- {aspect.reference}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold mb-2">Our Applications:</p>
+                  <ul className="text-xs space-y-1">
+                    {aspect.applications.map((app, aIdx) => (
+                      <li key={aIdx} className="flex items-center gap-2">
+                        <CheckCircle size={10} className="text-accent" />
+                        {app}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }

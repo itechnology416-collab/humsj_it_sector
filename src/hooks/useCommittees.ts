@@ -145,7 +145,7 @@ export const useCommittees = () => {
   const [useMockData, setUseMockData] = useState(false);
   const { user, isAdmin } = useAuth();
 
-  const checkTableExists = async () => {
+  const checkTableExists = async (): Promise<boolean> => {
     try {
       const { error } = await (supabase as any)
         .from('committees')

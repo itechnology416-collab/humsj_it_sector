@@ -29,7 +29,7 @@ interface SystemService {
   uptime: string;
   responseTime: string;
   lastChecked: string;
-  icon: any;
+  icon: React.ReactNode;
   description: string;
 }
 

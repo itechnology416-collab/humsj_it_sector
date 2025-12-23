@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PublicPageLayout } from "@/components/layout/PublicPageLayout";
 import { 
   Image, 
   Video, 
@@ -19,7 +19,9 @@ import {
   Grid3X3,
   List,
   Star,
-  Upload
+  Upload,
+  CheckCircle,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -222,7 +224,7 @@ export default function Gallery() {
   };
 
   return (
-    <PageLayout 
+    <PublicPageLayout 
       title="Gallery" 
       subtitle="Explore photos and videos from HUMSJ events, activities, and community moments"
       currentPath={location.pathname}
@@ -534,7 +536,198 @@ export default function Gallery() {
             </div>
           </div>
         </div>
+
+        {/* Islamic Art & Photography Guidelines */}
+        <div className="bg-gradient-to-r from-purple-500/10 via-violet-500/10 to-indigo-500/10 rounded-3xl p-8 border border-purple-500/20 mt-12">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Camera size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Islamic Guidelines for Photography & Visual Arts</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding Islamic principles that guide visual documentation and artistic expression in our community
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Photography Ethics */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">📸</span>
+                Photography Ethics in Islam
+              </h3>
+              <div className="space-y-4">
+                {[
+                  {
+                    principle: "Privacy and Consent",
+                    description: "Always seek permission before photographing individuals",
+                    islamicBasis: "Islam emphasizes respecting others' privacy and dignity",
+                    application: "Ask for consent, especially for close-up photos or in private settings"
+                  },
+                  {
+                    principle: "Modesty Guidelines",
+                    description: "Ensure photographs maintain Islamic standards of modesty",
+                    islamicBasis: "Preserving the concept of Hijab and appropriate dress",
+                    application: "Focus on faces and upper body, avoid inappropriate angles"
+                  },
+                  {
+                    principle: "Purposeful Documentation",
+                    description: "Capture moments that serve beneficial purposes",
+                    islamicBasis: "Islam encourages actions that bring benefit to the community",
+                    application: "Document educational events, community service, and positive activities"
+                  },
+                  {
+                    principle: "Avoiding Extravagance",
+                    description: "Balance between documentation and living in the moment",
+                    islamicBasis: "Islam discourages excessive focus on material displays",
+                    application: "Don't let photography distract from the actual experience"
+                  }
+                ].map((guideline, idx) => (
+                  <div key={idx} className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                    <h4 className="font-semibold text-primary mb-2">{guideline.principle}</h4>
+                    <p className="text-sm mb-2">{guideline.description}</p>
+                    <p className="text-xs text-muted-foreground mb-2"><strong>Islamic Basis:</strong> {guideline.islamicBasis}</p>
+                    <p className="text-xs text-accent"><strong>Application:</strong> {guideline.application}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Islamic Art Principles */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">🎨</span>
+                Islamic Art & Aesthetic Principles
+              </h3>
+              <div className="space-y-4">
+                {[
+                  {
+                    principle: "Geometric Patterns",
+                    description: "Reflecting the order and unity in Allah's creation",
+                    examples: ["Islamic calligraphy backgrounds", "Geometric borders", "Pattern overlays"],
+                    significance: "Represents the infinite nature of Allah"
+                  },
+                  {
+                    principle: "Calligraphy Integration",
+                    description: "Incorporating beautiful Arabic script and Quranic verses",
+                    examples: ["Verse overlays on nature photos", "Calligraphic event titles", "Arabic typography"],
+                    significance: "Honors the beauty of the Arabic language and Quran"
+                  },
+                  {
+                    principle: "Natural Beauty Focus",
+                    description: "Highlighting Allah's creation in nature and community",
+                    examples: ["Landscape photography", "Community gatherings", "Educational moments"],
+                    significance: "Encourages reflection on Allah's signs in creation"
+                  },
+                  {
+                    principle: "Meaningful Composition",
+                    description: "Creating images that inspire and educate",
+                    examples: ["Study circle documentation", "Community service photos", "Cultural celebrations"],
+                    significance: "Art should serve a beneficial purpose in society"
+                  }
+                ].map((principle, idx) => (
+                  <div key={idx} className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                    <h4 className="font-semibold text-primary mb-2">{principle.principle}</h4>
+                    <p className="text-sm mb-3">{principle.description}</p>
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold mb-1">Examples:</p>
+                      <ul className="text-xs space-y-1">
+                        {principle.examples.map((example, eIdx) => (
+                          <li key={eIdx} className="flex items-center gap-2">
+                            <Star size={10} className="text-accent" />
+                            {example}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <p className="text-xs text-accent"><strong>Significance:</strong> {principle.significance}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Community Memory & Documentation */}
+        <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 rounded-3xl p-8 border border-amber-500/20">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Heart size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Preserving Community Memories</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              The importance of documenting our community's journey and preserving memories for future generations
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              {
+                category: "Educational Moments",
+                description: "Capturing learning and knowledge sharing",
+                importance: "Inspires others to seek knowledge",
+                examples: ["Study circles", "Lectures", "Workshops", "Graduation ceremonies"],
+                hadith: "Seek knowledge from the cradle to the grave",
+                icon: "📚",
+                color: "from-green-500 to-emerald-500"
+              },
+              {
+                category: "Community Service",
+                description: "Documenting acts of service and charity",
+                importance: "Encourages others to serve the community",
+                examples: ["Volunteer work", "Charity drives", "Community clean-up", "Helping neighbors"],
+                hadith: "The best of people are those who benefit others",
+                icon: "🤝",
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                category: "Spiritual Gatherings",
+                description: "Recording moments of worship and reflection",
+                importance: "Strengthens spiritual connection",
+                examples: ["Group prayers", "Dhikr sessions", "Ramadan activities", "Eid celebrations"],
+                hadith: "Remember often the destroyer of pleasures: death",
+                icon: "🤲",
+                color: "from-purple-500 to-violet-500"
+              },
+              {
+                category: "Cultural Heritage",
+                description: "Preserving Islamic traditions and customs",
+                importance: "Maintains connection to Islamic identity",
+                examples: ["Traditional dress", "Cultural events", "Language programs", "Art exhibitions"],
+                hadith: "He is not one of us who does not have mercy on our young and does not respect our elders",
+                icon: "🏛️",
+                color: "from-red-500 to-pink-500"
+              }
+            ].map((category, idx) => (
+              <div key={idx} className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30 hover:scale-105 transition-transform duration-300">
+                <div className="text-center mb-4">
+                  <span className="text-3xl mb-2 block">{category.icon}</span>
+                  <h3 className="text-lg font-semibold text-primary">{category.category}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
+                <div className="bg-secondary/20 rounded-lg p-3 mb-4">
+                  <p className="text-xs font-semibold mb-2">Why It Matters:</p>
+                  <p className="text-xs">{category.importance}</p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-xs font-semibold mb-2">Examples:</p>
+                  <ul className="text-xs space-y-1">
+                    {category.examples.map((example, eIdx) => (
+                      <li key={eIdx} className="flex items-center gap-2">
+                        <CheckCircle size={10} className="text-accent" />
+                        {example}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3">
+                  "{category.hadith}"
+                </blockquote>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }

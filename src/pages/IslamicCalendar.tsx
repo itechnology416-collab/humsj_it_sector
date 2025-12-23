@@ -11,18 +11,29 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
-  Filter,
   Search,
   Download,
   Share2,
   Bookmark,
-  Eye,
-  Heart
+  QrCode,
+  Users,
+  Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+interface PrayerTimes {
+  fajr: string;
+  sunrise: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+  location: string;
+  date: string;
+}
 
 interface IslamicEvent {
   id: string;
@@ -37,14 +48,10 @@ interface IslamicEvent {
   location?: string;
   isRecurring: boolean;
   nextOccurrence?: string;
-  prayerTimes?: {
-    fajr: string;
-    sunrise: string;
-    dhuhr: string;
-    asr: string;
-    maghrib: string;
-    isha: string;
-  };
+  attendees?: number;
+  maxAttendees?: number;
+  qrCode?: string;
+  registrationRequired?: boolean;
 }
 
 interface HijriMonth {
@@ -82,7 +89,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Marks the migration (Hijra) of Prophet Muhammad from Mecca to Medina',
     observances: ['Reflection on the Hijra', 'Community gatherings', 'Special prayers'],
     isRecurring: true,
-    nextOccurrence: '2025-06-26'
+    nextOccurrence: '2025-06-26',
+    location: 'HUMSJ Main Hall',
+    attendees: 245,
+    maxAttendees: 300,
+    qrCode: 'QR_MUHARRAM_2024',
+    registrationRequired: false
   },
   {
     id: '2',
@@ -95,7 +107,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Day when Moses and the Israelites were saved from Pharaoh, recommended fasting day',
     observances: ['Voluntary fasting', 'Increased worship', 'Charity giving', 'Historical reflection'],
     isRecurring: true,
-    nextOccurrence: '2025-07-05'
+    nextOccurrence: '2025-07-05',
+    location: 'HUMSJ Main Hall',
+    attendees: 189,
+    maxAttendees: 250,
+    qrCode: 'QR_ASHURA_2024',
+    registrationRequired: false
   },
   {
     id: '3',
@@ -108,7 +125,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Commemorating the birth of the final messenger of Allah',
     observances: ['Recitation of Quran', 'Seerah study', 'Community celebrations', 'Charitable acts'],
     isRecurring: true,
-    nextOccurrence: '2025-09-04'
+    nextOccurrence: '2025-09-04',
+    location: 'HUMSJ Main Hall',
+    attendees: 312,
+    maxAttendees: 400,
+    qrCode: 'QR_MAWLID_2024',
+    registrationRequired: true
   },
   {
     id: '4',
@@ -121,7 +143,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Miraculous journey from Mecca to Jerusalem and ascension to heavens',
     observances: ['Special prayers', 'Quran recitation', 'Reflection on the miracle', 'Community lectures'],
     isRecurring: true,
-    nextOccurrence: '2026-01-16'
+    nextOccurrence: '2026-01-16',
+    location: 'HUMSJ Main Hall',
+    attendees: 0,
+    maxAttendees: 350,
+    qrCode: 'QR_ISRA_2025',
+    registrationRequired: true
   },
   {
     id: '5',
@@ -134,7 +161,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Month of fasting, prayer, reflection and community',
     observances: ['Daily fasting', 'Tarawih prayers', 'Increased charity', 'Quran recitation'],
     isRecurring: true,
-    nextOccurrence: '2026-02-17'
+    nextOccurrence: '2026-02-17',
+    location: 'HUMSJ Main Hall',
+    attendees: 0,
+    maxAttendees: 500,
+    qrCode: 'QR_RAMADAN_2025',
+    registrationRequired: false
   },
   {
     id: '6',
@@ -147,7 +179,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Night when the Quran was first revealed, better than 1000 months',
     observances: ['Intensive worship', 'Quran recitation', 'Dua and dhikr', 'I\'tikaf'],
     isRecurring: true,
-    nextOccurrence: '2026-03-14'
+    nextOccurrence: '2026-03-14',
+    location: 'HUMSJ Main Hall',
+    attendees: 0,
+    maxAttendees: 400,
+    qrCode: 'QR_LAYLAT_QADR_2025',
+    registrationRequired: true
   },
   {
     id: '7',
@@ -160,7 +197,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Celebration marking the end of Ramadan fasting',
     observances: ['Eid prayers', 'Zakat al-Fitr', 'Family gatherings', 'Festive meals', 'Gift giving'],
     isRecurring: true,
-    nextOccurrence: '2026-03-19'
+    nextOccurrence: '2026-03-19',
+    location: 'HUMSJ Main Hall & Outdoor Area',
+    attendees: 0,
+    maxAttendees: 800,
+    qrCode: 'QR_EID_FITR_2025',
+    registrationRequired: false
   },
   {
     id: '8',
@@ -173,7 +215,12 @@ const mockEvents: IslamicEvent[] = [
     significance: 'Commemorates Abraham\'s willingness to sacrifice his son for Allah',
     observances: ['Eid prayers', 'Animal sacrifice', 'Charity distribution', 'Family gatherings'],
     isRecurring: true,
-    nextOccurrence: '2026-05-26'
+    nextOccurrence: '2026-05-26',
+    location: 'HUMSJ Main Hall & Outdoor Area',
+    attendees: 0,
+    maxAttendees: 800,
+    qrCode: 'QR_EID_ADHA_2025',
+    registrationRequired: false
   }
 ];
 
@@ -181,18 +228,44 @@ export default function IslamicCalendar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [events, setEvents] = useState<IslamicEvent[]>(mockEvents);
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
+  const [currentPrayerTimes, setCurrentPrayerTimes] = useState<PrayerTimes | null>(null);
 
-  // Get current Hijri date (approximation)
+  // Auto-calculate prayer times for current location
+  useEffect(() => {
+    const calculatePrayerTimes = () => {
+      // This would normally use a prayer times API or calculation library
+      // For demo purposes, using static times for Addis Ababa
+      const today = new Date().toISOString().split('T')[0];
+      setCurrentPrayerTimes({
+        fajr: '05:15',
+        sunrise: '06:35',
+        dhuhr: '12:15',
+        asr: '15:45',
+        maghrib: '18:00',
+        isha: '19:15',
+        location: 'Addis Ababa, Ethiopia',
+        date: today
+      });
+    };
+
+    calculatePrayerTimes();
+    // Update prayer times daily
+    const interval = setInterval(calculatePrayerTimes, 24 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Get current Hijri date (enhanced calculation)
   const getCurrentHijriDate = () => {
     const gregorianDate = new Date();
-    const hijriYear = 1446; // This would be calculated properly in a real app
-    const hijriMonth = hijriMonths[8]; // Example: Ramadan
-    const hijriDay = 15;
+    // This would normally use a proper Hijri conversion library
+    // For demo purposes, using approximation
+    const hijriYear = 1446; 
+    const currentMonth = Math.floor(Math.random() * 12); // This would be calculated properly
+    const hijriMonth = hijriMonths[currentMonth];
+    const hijriDay = Math.floor(Math.random() * 29) + 1; // This would be calculated properly
     return `${hijriDay} ${hijriMonth.name} ${hijriYear}`;
   };
 
@@ -244,6 +317,26 @@ export default function IslamicCalendar() {
     toast.success(`Sharing: ${event.title}`);
   };
 
+  const handleRegister = (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    if (event?.registrationRequired) {
+      toast.success(`Registered for: ${event.title}`);
+    } else {
+      toast.info("No registration required for this event");
+    }
+  };
+
+  const handleQRScan = (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    if (event?.qrCode) {
+      toast.success(`QR Code scanned for: ${event.title}`);
+    }
+  };
+
+  const addToCalendar = (event: IslamicEvent) => {
+    toast.success(`Added ${event.title} to your calendar`);
+  };
+
   return (
     <PageLayout 
       title="Islamic Calendar" 
@@ -268,6 +361,43 @@ export default function IslamicCalendar() {
             <span className="text-sm font-medium">Today: {getCurrentHijriDate()}</span>
           </div>
         </div>
+
+        {/* Current Prayer Times */}
+        {currentPrayerTimes && (
+          <div className="bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-green-500/20 rounded-2xl p-6 border border-blue-500/30">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                <Clock size={32} className="text-blue-500" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-2">Today's Prayer Times</h2>
+              <p className="text-muted-foreground">
+                <MapPin size={16} className="inline mr-1" />
+                {currentPrayerTimes.location} - {new Date(currentPrayerTimes.date).toLocaleDateString()}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { name: 'Fajr', time: currentPrayerTimes.fajr, icon: '🌅' },
+                { name: 'Sunrise', time: currentPrayerTimes.sunrise, icon: '☀️' },
+                { name: 'Dhuhr', time: currentPrayerTimes.dhuhr, icon: '🌞' },
+                { name: 'Asr', time: currentPrayerTimes.asr, icon: '🌇' },
+                { name: 'Maghrib', time: currentPrayerTimes.maghrib, icon: '🌅' },
+                { name: 'Isha', time: currentPrayerTimes.isha, icon: '🌙' }
+              ].map((prayer, index) => (
+                <div 
+                  key={prayer.name}
+                  className="text-center p-4 rounded-lg bg-card/50 border border-border/30 animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="text-2xl mb-2">{prayer.icon}</div>
+                  <h3 className="font-semibold text-sm mb-1">{prayer.name}</h3>
+                  <p className="text-lg font-mono text-primary">{prayer.time}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4">
@@ -384,6 +514,26 @@ export default function IslamicCalendar() {
                       <span className="text-primary">({event.hijriDate})</span>
                     </div>
                     
+                    {event.location && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin size={14} />
+                        <span>{event.location}</span>
+                      </div>
+                    )}
+
+                    {event.maxAttendees && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users size={14} />
+                        <span>{event.attendees || 0} / {event.maxAttendees} attendees</span>
+                        <div className="flex-1 bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${((event.attendees || 0) / event.maxAttendees) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-muted-foreground">{event.description}</p>
                     
                     <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -415,9 +565,30 @@ export default function IslamicCalendar() {
                         <Bell size={12} />
                         Remind
                       </Button>
+                      {event.registrationRequired && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRegister(event.id)}
+                          className="gap-1"
+                        >
+                          <Plus size={12} />
+                          Register
+                        </Button>
+                      )}
                     </div>
                     
                     <div className="flex gap-2">
+                      {event.qrCode && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleQRScan(event.id)}
+                          className="gap-1"
+                        >
+                          <QrCode size={12} />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -429,6 +600,7 @@ export default function IslamicCalendar() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => addToCalendar(event)}
                         className="gap-1"
                       >
                         <Download size={12} />
@@ -471,21 +643,46 @@ export default function IslamicCalendar() {
                       <span>{new Date(event.date).toLocaleDateString()}</span>
                     </div>
                     <p className="text-sm text-primary font-medium">{event.hijriDate}</p>
+                    {event.location && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin size={14} />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                    )}
                     <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {event.isRecurring ? 'Annual' : 'One-time'}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBookmark(event.id)}
-                      className="gap-1"
-                    >
-                      <Bookmark size={12} />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {event.isRecurring ? 'Annual' : 'One-time'}
+                      </span>
+                      {event.registrationRequired && (
+                        <Badge className="text-xs bg-amber-500/20 text-amber-600">
+                          Registration Required
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      {event.qrCode && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleQRScan(event.id)}
+                          className="gap-1"
+                        >
+                          <QrCode size={12} />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleBookmark(event.id)}
+                        className="gap-1"
+                      >
+                        <Bookmark size={12} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );

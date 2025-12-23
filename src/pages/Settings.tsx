@@ -105,7 +105,7 @@ export default function SettingsPage() {
   );
 }
 
-function ProfileSettings({ profile, user }: { profile: any; user: any }) {
+function ProfileSettings({ profile, user }: { profile: Record<string, unknown> | null; user: Record<string, unknown> | null }) {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
   const [college, setCollege] = useState(profile?.college || "");

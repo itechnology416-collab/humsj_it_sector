@@ -15,7 +15,8 @@ import {
   Star,
   Zap,
   Eye,
-  CheckCircle
+  CheckCircle,
+  Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -239,6 +240,15 @@ export default function SmartRecommendations({
           >
             <Brain size={12} />
             AI Insights
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate('/ai-voice-assistant')}
+            className="flex-1 text-xs gap-1"
+          >
+            <Mic size={12} />
+            Voice AI
           </Button>
           <Button
             size="sm"

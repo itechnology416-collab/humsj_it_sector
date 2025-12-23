@@ -12,7 +12,7 @@ export interface SystemLog {
   user_id?: string;
   ip_address?: string;
   user_agent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   service_name: string;
   environment: string;
 }
@@ -25,14 +25,14 @@ export interface SystemHealthMetric {
   metric_value?: number;
   metric_unit?: string;
   status: 'operational' | 'degraded' | 'outage';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CreateLogData {
   level: SystemLog['level'];
   message: string;
   category: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   service_name?: string;
 }
 
@@ -42,7 +42,7 @@ export interface CreateMetricData {
   metric_value?: number;
   metric_unit?: string;
   status: SystemHealthMetric['status'];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Mock data for development

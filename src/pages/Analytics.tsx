@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
   return (
     <PageLayout 
       title="Analytics" 
-      subtitle="Comprehensive analytics and insights for HUMSJ IT Sector"
+      subtitle="Comprehensive analytics and insights for HUMSJ Academic Sector"
       currentPath={location.pathname}
       onNavigate={navigate}
     >

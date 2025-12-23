@@ -3,6 +3,7 @@ import {
   Users, 
   Calendar, 
   MessageSquare, 
+  MessageCircle,
   FileText, 
   Settings,
   BarChart3,
@@ -12,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  Play,
   UserCog,
   Zap,
   User,
@@ -33,7 +33,14 @@ import {
   Moon,
   Baby,
   Quote,
-  Navigation
+  Navigation,
+  Globe,
+  Crown,
+  Mountain,
+  Palette,
+  Image,
+  Store,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -57,16 +64,26 @@ const mainNavItems: NavItem[] = [
   { icon: Users, label: "Members", href: "/members", badge: 234 },
   { icon: Calendar, label: "Events", href: "/events", badge: 5 },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
-  { icon: UserCheck, label: "Attendance", href: "/attendance", adminOnly: true },
-  { icon: Archive, label: "Inventory", href: "/inventory", adminOnly: true },
-  { icon: Star, label: "Feedback", href: "/feedback" },
-  { icon: Trophy, label: "Achievements", href: "/achievements" },
-  { icon: Code, label: "Projects", href: "/projects" },
-  { icon: Brain, label: "Skills & Training", href: "/skills" },
-  { icon: Package, label: "Equipment", href: "/equipment" },
-  { icon: Ticket, label: "Support Tickets", href: "/support" },
-  { icon: Briefcase, label: "Opportunities", href: "/opportunities" },
+];
+
+const islamicNavItems: NavItem[] = [
+  { icon: Sparkles, label: "Islamic Features", href: "/islamic-features" },
   { icon: Clock, label: "Prayer Times", href: "/prayer-times" },
+  { icon: Bell, label: "Prayer Reminders", href: "/prayer-reminders" },
+  { icon: BookOpen, label: "Quran Audio Player", href: "/quran-audio" },
+  { icon: Heart, label: "Prayer Tracker", href: "/prayer-tracker" },
+  { icon: Star, label: "Digital Tasbih", href: "/dhikr-counter" },
+  { icon: Calendar, label: "Hijri Calendar", href: "/hijri-calendar" },
+  { icon: Bell, label: "Islamic Notifications", href: "/islamic-notifications" },
+  { icon: Store, label: "Halal Marketplace", href: "/halal-marketplace" },
+  { icon: BookOpen, label: "Islamic Programs", href: "/islamic-programs" },
+  { icon: Brain, label: "Smart Study System", href: "/smart-study" },
+  { icon: Globe, label: "Islamic History", href: "/islamic-history" },
+  { icon: Crown, label: "Prophet's Life ﷺ", href: "/prophet-life" },
+  { icon: Users, label: "Sahaba & Women", href: "/sahaba-women" },
+  { icon: Mountain, label: "Islam in Ethiopia", href: "/islam-ethiopia" },
+  { icon: Palette, label: "Islamic Art", href: "/islamic-art" },
+  { icon: MessageCircle, label: "Da'wah Resources", href: "/dawa-content" },
   { icon: Navigation, label: "Qibla Finder", href: "/qibla-finder" },
   { icon: Moon, label: "Islamic Calendar", href: "/islamic-calendar" },
   { icon: BookOpen, label: "Khutbah Collection", href: "/khutbah" },
@@ -74,7 +91,22 @@ const mainNavItems: NavItem[] = [
   { icon: Quote, label: "Hadith Collection", href: "/hadith-collection" },
   { icon: Baby, label: "Islamic Names", href: "/islamic-names" },
   { icon: FileText, label: "Islamic Resources", href: "/islamic-resources" },
+];
+
+const managementNavItems: NavItem[] = [
+  { icon: UserCheck, label: "Attendance", href: "/attendance", adminOnly: true },
+  { icon: Users, label: "User Approval", href: "/admin-user-approval", adminOnly: true },
+  { icon: Archive, label: "Inventory", href: "/inventory", adminOnly: true },
+  { icon: Star, label: "Feedback", href: "/feedback" },
+  { icon: Trophy, label: "Achievements", href: "/achievements" },
+  { icon: Image, label: "Media Gallery", href: "/media-gallery" },
+  { icon: Code, label: "Projects", href: "/projects" },
+  { icon: Brain, label: "Skills & Training", href: "/skills" },
+  { icon: Package, label: "Equipment", href: "/equipment" },
+  { icon: Ticket, label: "Support Tickets", href: "/support" },
+  { icon: Briefcase, label: "Opportunities", href: "/opportunities" },
   { icon: MessageSquare, label: "Communication", href: "/communication" },
+  { icon: MessageSquare, label: "Information Channels", href: "/information-channels" },
   { icon: FileText, label: "Content", href: "/content" },
   { icon: Smartphone, label: "Islamic Tech", href: "/islamic-tech" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
@@ -91,18 +123,24 @@ const secondaryNavItems: NavItem[] = [
 interface SidebarProps {
   currentPath: string;
   onNavigate: (path: string) => void;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
+export function Sidebar({ currentPath, onNavigate, onCollapseChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showQuickNav, setShowQuickNav] = useState(false);
   const { user, profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      navigate("/");
+    } catch (error: unknown) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
+    }
   };
 
   const handleNavigate = (path: string) => {
@@ -111,20 +149,26 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
   };
 
   const filteredMainNavItems = mainNavItems.filter(item => !item.adminOnly || isAdmin);
+  const filteredIslamicNavItems = islamicNavItems.filter(item => !item.adminOnly || isAdmin);
+  const filteredManagementNavItems = managementNavItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
       <aside 
         className={cn(
-          "fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 z-50 border-r border-sidebar-border",
+          "sidebar-fixed bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 border-r border-sidebar-border overflow-hidden",
           collapsed ? "w-20" : "w-64"
         )}
       >
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => handleNavigate("/")}>
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-red group-hover:animate-glow transition-all">
-              <span className="font-display text-lg text-primary-foreground">H</span>
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-red group-hover:animate-glow transition-all overflow-hidden">
+              <img 
+                src="/logo.jpg" 
+                alt="HUMSJ Logo" 
+                className="w-8 h-8 rounded object-cover"
+              />
             </div>
             {!collapsed && (
               <div className="animate-fade-in">
@@ -137,7 +181,11 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
 
         {/* Collapse Button */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => {
+            const newCollapsed = !collapsed;
+            setCollapsed(newCollapsed);
+            onCollapseChange?.(newCollapsed);
+          }}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-red hover:scale-110 transition-transform"
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -161,10 +209,39 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
 
         {/* Main Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {/* Main Section */}
           <p className={cn("text-xs uppercase tracking-wider text-sidebar-foreground/40 mb-4 px-3", collapsed && "text-center")}>
             {collapsed ? "•••" : "Main Menu"}
           </p>
           {filteredMainNavItems.map((item) => (
+            <NavButton 
+              key={item.href}
+              item={item}
+              isActive={currentPath === item.href}
+              collapsed={collapsed}
+              onClick={() => handleNavigate(item.href)}
+            />
+          ))}
+
+          {/* Islamic Tools Section */}
+          <p className={cn("text-xs uppercase tracking-wider text-sidebar-foreground/40 mb-4 mt-6 px-3", collapsed && "text-center")}>
+            {collapsed ? "🕌" : "Islamic Tools"}
+          </p>
+          {filteredIslamicNavItems.map((item) => (
+            <NavButton 
+              key={item.href}
+              item={item}
+              isActive={currentPath === item.href}
+              collapsed={collapsed}
+              onClick={() => handleNavigate(item.href)}
+            />
+          ))}
+
+          {/* Management Section */}
+          <p className={cn("text-xs uppercase tracking-wider text-sidebar-foreground/40 mb-4 mt-6 px-3", collapsed && "text-center")}>
+            {collapsed ? "⚙️" : "Management"}
+          </p>
+          {filteredManagementNavItems.map((item) => (
             <NavButton 
               key={item.href}
               item={item}
@@ -240,6 +317,7 @@ interface NavButtonProps {
 
 function NavButton({ item, isActive, collapsed, onClick }: NavButtonProps) {
   const Icon = item.icon;
+  const isIslamicPrograms = item.href === "/islamic-programs";
   
   return (
     <button
@@ -248,6 +326,8 @@ function NavButton({ item, isActive, collapsed, onClick }: NavButtonProps) {
         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
         isActive 
           ? "bg-primary text-primary-foreground shadow-red" 
+          : isIslamicPrograms
+          ? "text-sidebar-foreground hover:text-sidebar-foreground hover:bg-primary/10 border border-primary/20"
           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
         collapsed && "justify-center"
       )}

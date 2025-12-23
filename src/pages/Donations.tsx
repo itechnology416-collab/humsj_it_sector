@@ -120,7 +120,7 @@ const mockCampaigns: Campaign[] = [
     start_date: "2024-02-15",
     end_date: "2024-08-15",
     status: "active",
-    organizer: "IT Sector",
+    organizer: "Academic Sector",
     created_at: "2024-02-15"
   }
 ];

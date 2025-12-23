@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNews } from "@/hooks/useNews";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PublicPageLayout } from "@/components/layout/PublicPageLayout";
 import { 
   Newspaper, 
   Calendar, 
@@ -15,10 +15,14 @@ import {
   Bell,
   Pin,
   Tag,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  Shield,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ParallaxSection, ParallaxContainer } from "@/components/effects/ParallaxContainer";
 
 interface NewsItem {
   id: string;
@@ -154,7 +158,7 @@ export default function News() {
   };
 
   return (
-    <PageLayout 
+    <PublicPageLayout 
       title="News & Announcements" 
       subtitle="Stay updated with community news"
       currentPath={location.pathname}
@@ -358,7 +362,178 @@ export default function News() {
             </div>
           </div>
         </div>
+
+        {/* Islamic News & Media Ethics */}
+        <ParallaxSection 
+          className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-blue-500/20 mt-12"
+          backgroundPattern="islamic"
+          speed={0.4}
+        >
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Newspaper size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Islamic Media Ethics & News Guidelines</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding Islamic principles that guide truthful reporting, responsible sharing, and ethical communication
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Truth and Verification */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">✅</span>
+                Truth and Verification (Tabayyun)
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                  <h4 className="font-semibold text-primary mb-2">Quranic Guidance</h4>
+                  <p className="text-lg font-arabic text-right mb-2 text-green-600">
+                    يَا أَيُّهَا الَّذِينَ آمَنُوا إِن جَاءَكُمْ فَاسِقٌ بِنَبَإٍ فَتَبَيَّنُوا
+                  </p>
+                  <p className="text-sm italic text-muted-foreground mb-2">
+                    "O you who believe! If a wicked person comes to you with any news, ascertain the truth..."
+                  </p>
+                  <p className="text-xs text-accent font-medium">- Quran 49:6</p>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    "Verify information before sharing",
+                    "Check multiple reliable sources",
+                    "Avoid spreading unconfirmed reports",
+                    "Correct mistakes when discovered"
+                  ].map((principle, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-sm">
+                      <CheckCircle size={16} className="text-green-500" />
+                      {principle}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Avoiding Harm */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">🛡️</span>
+                Avoiding Harm (La Darar wa la Dirar)
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                  <h4 className="font-semibold text-primary mb-2">Prophetic Teaching</h4>
+                  <blockquote className="text-sm italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                    "There should be neither harming nor reciprocating harm."
+                  </blockquote>
+                  <p className="text-xs text-accent font-medium">- Ibn Majah</p>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    "Avoid sensationalism and fear-mongering",
+                    "Protect privacy and dignity of individuals",
+                    "Consider the impact on community harmony",
+                    "Focus on constructive and beneficial content"
+                  ].map((principle, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-sm">
+                      <Shield size={16} className="text-blue-500" />
+                      {principle}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ParallaxSection>
+
+        {/* Islamic Current Affairs Knowledge */}
+        <ParallaxSection 
+          className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 rounded-3xl p-8 border border-green-500/20"
+          backgroundPattern="dots"
+          speed={0.3}
+        >
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Globe size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Understanding Current Affairs Through Islamic Lens</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Analyzing contemporary issues and events through Islamic principles and values
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                topic: "Social Justice",
+                islamicPerspective: "Islam emphasizes justice (Adl) as a fundamental principle",
+                keyPrinciples: [
+                  "Equality before Allah regardless of race or status",
+                  "Protection of the weak and vulnerable",
+                  "Fair distribution of resources",
+                  "Speaking truth to power"
+                ],
+                verse: "O you who believe! Stand out firmly for justice, as witnesses to Allah, even if it be against yourselves, your parents, and your relatives.",
+                reference: "Quran 4:135",
+                color: "from-blue-500 to-cyan-500",
+                icon: "⚖️"
+              },
+              {
+                topic: "Environmental Issues",
+                islamicPerspective: "Humans are trustees (Khalifa) of Earth, responsible for its care",
+                keyPrinciples: [
+                  "Avoiding waste (Israf) and excess",
+                  "Protecting natural resources",
+                  "Maintaining ecological balance",
+                  "Sustainable development practices"
+                ],
+                verse: "And it is He who has made you successors upon the earth.",
+                reference: "Quran 35:39",
+                color: "from-green-500 to-emerald-500",
+                icon: "🌍"
+              },
+              {
+                topic: "Economic Affairs",
+                islamicPerspective: "Islamic economics promotes ethical trade and social welfare",
+                keyPrinciples: [
+                  "Prohibition of interest (Riba)",
+                  "Fair trade and honest dealings",
+                  "Wealth circulation through Zakat",
+                  "Prohibition of exploitation"
+                ],
+                verse: "Allah has permitted trade and has forbidden interest.",
+                reference: "Quran 2:275",
+                color: "from-amber-500 to-yellow-500",
+                icon: "💰"
+              }
+            ].map((topic, idx) => (
+              <div key={idx} className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30 hover:scale-105 transition-transform duration-300">
+                <div className="text-center mb-4">
+                  <span className="text-3xl mb-2 block">{topic.icon}</span>
+                  <h3 className="text-lg font-semibold text-primary">{topic.topic}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">{topic.islamicPerspective}</p>
+                <div className="bg-secondary/20 rounded-lg p-3 mb-4">
+                  <h4 className="font-semibold mb-2 text-sm">Key Principles:</h4>
+                  <ul className="text-xs space-y-1">
+                    {topic.keyPrinciples.map((principle, pIdx) => (
+                      <li key={pIdx} className="flex items-center gap-2">
+                        <CheckCircle size={12} className="text-accent" />
+                        {principle}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                  "{topic.verse}"
+                </blockquote>
+                <p className="text-xs text-accent font-medium">- {topic.reference}</p>
+              </div>
+            ))}
+          </div>
+        </ParallaxSection>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }

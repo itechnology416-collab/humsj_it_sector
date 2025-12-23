@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
+import IslamicSpaceFiller from "@/components/islamic/IslamicSpaceFiller";
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -27,7 +29,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PublicPageLayout } from "@/components/layout/PublicPageLayout";
 import { toast } from "sonner";
 
 interface Event {
@@ -97,7 +99,7 @@ const events: Event[] = [
   },
   {
     id: "5",
-    title: "IT Sector Weekly Standup",
+    title: "Academic Sector Weekly Meeting",
     type: "meeting",
     date: "2024-02-18",
     time: "10:00",
@@ -226,7 +228,7 @@ export default function EventsPage() {
   };
 
   return (
-    <PageLayout 
+    <PublicPageLayout 
       title="Events" 
       subtitle="Manage and schedule events"
       currentPath={location.pathname}
@@ -478,8 +480,303 @@ export default function EventsPage() {
         {view === "calendar" && (
           <CalendarView events={filteredEvents} month={currentMonth} year={currentYear} />
         )}
+
+        {/* Islamic Event Guidelines & Knowledge */}
+        <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 rounded-3xl p-8 border border-green-500/20 mt-12">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <CalendarIcon size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Islamic Event Guidelines & Etiquettes</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding the Islamic principles and etiquettes that guide our community events and gatherings
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Event Etiquettes */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">🤝</span>
+                Event Etiquettes (Adab al-Majlis)
+              </h3>
+              <div className="space-y-4">
+                {[
+                  {
+                    title: "Entering the Gathering",
+                    guideline: "Say 'Assalamu Alaikum' and seek permission before joining",
+                    hadith: "The Prophet (ﷺ) said: 'When one of you comes to a gathering, let him give the greeting of peace.'",
+                    reference: "Abu Dawud"
+                  },
+                  {
+                    title: "Seating Arrangement",
+                    guideline: "Sit where there is space, don't ask people to move",
+                    hadith: "The Prophet (ﷺ) said: 'It is not permissible for a man to separate two people except with their permission.'",
+                    reference: "Abu Dawud, Tirmidhi"
+                  },
+                  {
+                    title: "Speaking in Gatherings",
+                    guideline: "Speak with wisdom, listen attentively, and avoid interrupting",
+                    hadith: "The Prophet (ﷺ) said: 'Whoever believes in Allah and the Last Day should speak good or remain silent.'",
+                    reference: "Bukhari, Muslim"
+                  },
+                  {
+                    title: "Leaving the Gathering",
+                    guideline: "Seek forgiveness and say the gathering's closing dua",
+                    hadith: "The Prophet (ﷺ) would say when leaving a gathering: 'Subhanaka Allahumma wa bihamdika, ashhadu an la ilaha illa anta, astaghfiruka wa atubu ilayk'",
+                    reference: "Abu Dawud, Tirmidhi"
+                  }
+                ].map((etiquette, idx) => (
+                  <div key={idx} className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                    <h4 className="font-semibold text-primary mb-2">{etiquette.title}</h4>
+                    <p className="text-sm mb-3 font-medium">{etiquette.guideline}</p>
+                    <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                      "{etiquette.hadith}"
+                    </blockquote>
+                    <p className="text-xs text-accent font-medium">- {etiquette.reference}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Islamic Event Types */}
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">📚</span>
+                Types of Islamic Gatherings
+              </h3>
+              <div className="space-y-4">
+                {[
+                  {
+                    type: "Halaqah (Study Circle)",
+                    purpose: "Learning and discussing Islamic knowledge",
+                    benefits: "Spiritual growth, knowledge sharing, community bonding",
+                    hadith: "No people gather in one of the houses of Allah, reciting the Book of Allah and studying it among themselves, except that tranquility descends upon them.",
+                    reference: "Muslim"
+                  },
+                  {
+                    type: "Dhikr Gathering",
+                    purpose: "Remembrance of Allah collectively",
+                    benefits: "Spiritual purification, heart softening, divine mercy",
+                    hadith: "Allah has angels who go around on the roads seeking those who remember Allah. When they find people remembering Allah, they call to each other: 'Come to what you are looking for!'",
+                    reference: "Bukhari, Muslim"
+                  },
+                  {
+                    type: "Da'wah Session",
+                    purpose: "Inviting others to Islam and Islamic values",
+                    benefits: "Spreading knowledge, earning reward, community outreach",
+                    hadith: "Whoever calls to guidance will have a reward similar to that of those who follow it, without the reward being lessened at all.",
+                    reference: "Muslim"
+                  }
+                ].map((gathering, idx) => (
+                  <div key={idx} className="bg-secondary/20 rounded-xl p-4 border border-secondary/30">
+                    <h4 className="font-semibold text-primary mb-2">{gathering.type}</h4>
+                    <p className="text-sm mb-2"><strong>Purpose:</strong> {gathering.purpose}</p>
+                    <p className="text-sm mb-3"><strong>Benefits:</strong> {gathering.benefits}</p>
+                    <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                      "{gathering.hadith}"
+                    </blockquote>
+                    <p className="text-xs text-accent font-medium">- {gathering.reference}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Islamic Educational Content - Between Events and Prayer Times */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <IslamicEducationFiller type="hadith" size="large" />
+          <IslamicSpaceFiller preferredContent="educational" minHeight={300} maxHeight={400} />
+        </div>
+
+        {/* Prayer Times & Event Scheduling */}
+        <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-blue-500/20">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Clock size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Prayer Times & Event Scheduling</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding how Islamic prayer times influence our event scheduling and community activities
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                prayer: "Fajr",
+                arabic: "الفجر",
+                time: "Dawn Prayer",
+                description: "The pre-dawn prayer that starts the day with remembrance of Allah",
+                eventConsiderations: [
+                  "Early morning study sessions after Fajr",
+                  "Spiritual reflection gatherings",
+                  "Community service planning meetings"
+                ],
+                virtue: "The Prophet (ﷺ) said: 'Whoever prays Fajr is under Allah's protection.'",
+                color: "from-orange-500 to-yellow-500",
+                icon: "🌅"
+              },
+              {
+                prayer: "Dhuhr",
+                arabic: "الظهر",
+                time: "Midday Prayer",
+                description: "The noon prayer that breaks the day's activities",
+                eventConsiderations: [
+                  "Lunch break during day-long events",
+                  "Midday educational workshops",
+                  "Community announcements"
+                ],
+                virtue: "The middle prayer that Allah specifically mentioned in the Quran",
+                color: "from-blue-500 to-cyan-500",
+                icon: "☀️"
+              },
+              {
+                prayer: "Asr",
+                arabic: "العصر",
+                time: "Afternoon Prayer",
+                description: "The afternoon prayer before sunset",
+                eventConsiderations: [
+                  "Afternoon study circles",
+                  "Sports and recreational activities",
+                  "Community service projects"
+                ],
+                virtue: "The Prophet (ﷺ) said: 'Whoever misses Asr prayer, it is as if he has lost his family and wealth.'",
+                color: "from-amber-500 to-orange-500",
+                icon: "🌤️"
+              },
+              {
+                prayer: "Maghrib",
+                arabic: "المغرب",
+                time: "Sunset Prayer",
+                description: "The prayer immediately after sunset",
+                eventConsiderations: [
+                  "Iftar gatherings during Ramadan",
+                  "Evening program openings",
+                  "Community dinner events"
+                ],
+                virtue: "The time when duas are most likely to be accepted",
+                color: "from-red-500 to-pink-500",
+                icon: "🌅"
+              },
+              {
+                prayer: "Isha",
+                arabic: "العشاء",
+                time: "Night Prayer",
+                description: "The final prayer of the day",
+                eventConsiderations: [
+                  "Evening lectures and seminars",
+                  "Night study sessions",
+                  "Community social gatherings"
+                ],
+                virtue: "The Prophet (ﷺ) said: 'The most burdensome prayers for the hypocrites are Isha and Fajr.'",
+                color: "from-purple-500 to-indigo-500",
+                icon: "🌙"
+              }
+            ].map((prayer, idx) => (
+              <div key={idx} className={`bg-gradient-to-br ${prayer.color} p-6 rounded-2xl text-white shadow-lg hover:scale-105 transition-transform duration-300`}>
+                <div className="text-center mb-4">
+                  <span className="text-3xl mb-2 block">{prayer.icon}</span>
+                  <h3 className="text-xl font-semibold">{prayer.prayer}</h3>
+                  <p className="text-lg font-arabic opacity-90">{prayer.arabic}</p>
+                  <p className="text-sm opacity-80">{prayer.time}</p>
+                </div>
+                <p className="text-sm mb-4 opacity-90">{prayer.description}</p>
+                <div className="bg-white/20 rounded-lg p-3 mb-4">
+                  <h4 className="font-semibold mb-2 text-sm">Event Considerations:</h4>
+                  <ul className="text-xs space-y-1">
+                    {prayer.eventConsiderations.map((consideration, cIdx) => (
+                      <li key={cIdx}>• {consideration}</li>
+                    ))}
+                  </ul>
+                </div>
+                <blockquote className="text-xs italic opacity-80 border-l-2 border-white/50 pl-2">
+                  "{prayer.virtue}"
+                </blockquote>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Community Event Benefits */}
+        <div className="bg-gradient-to-r from-purple-500/10 via-violet-500/10 to-indigo-500/10 rounded-3xl p-8 border border-purple-500/20">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse">
+              <Users size={32} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-display tracking-wide mb-4">Benefits of Community Gatherings in Islam</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Understanding the spiritual, social, and educational benefits of participating in Islamic community events
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                benefit: "Spiritual Growth",
+                description: "Collective worship and remembrance strengthen faith",
+                examples: ["Group prayers", "Dhikr circles", "Quran recitation"],
+                hadith: "The example of the believers in their affection, mercy, and compassion for each other is that of a body. When a limb suffers, the whole body responds to it with wakefulness and fever.",
+                reference: "Bukhari, Muslim",
+                icon: "🤲",
+                color: "from-green-500 to-emerald-500"
+              },
+              {
+                benefit: "Knowledge Sharing",
+                description: "Learning from scholars and fellow community members",
+                examples: ["Study circles", "Lectures", "Q&A sessions"],
+                hadith: "Whoever follows a path in the pursuit of knowledge, Allah will make a path to Paradise easy for him.",
+                reference: "Muslim",
+                icon: "📚",
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                benefit: "Social Bonding",
+                description: "Building strong relationships and brotherhood/sisterhood",
+                examples: ["Community meals", "Social gatherings", "Group activities"],
+                hadith: "The believers in their mutual kindness, compassion, and sympathy are just one body. When a limb suffers, the whole body responds to it with wakefulness and fever.",
+                reference: "Bukhari, Muslim",
+                icon: "❤️",
+                color: "from-red-500 to-pink-500"
+              },
+              {
+                benefit: "Character Development",
+                description: "Learning patience, cooperation, and Islamic manners",
+                examples: ["Leadership roles", "Volunteer work", "Conflict resolution"],
+                hadith: "I was sent to perfect good character.",
+                reference: "Ahmad",
+                icon: "⭐",
+                color: "from-amber-500 to-yellow-500"
+              }
+            ].map((benefit, idx) => (
+              <div key={idx} className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/30 hover:scale-105 transition-transform duration-300">
+                <div className="text-center mb-4">
+                  <span className="text-3xl mb-2 block">{benefit.icon}</span>
+                  <h3 className="text-lg font-semibold text-primary">{benefit.benefit}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">{benefit.description}</p>
+                <div className="bg-secondary/20 rounded-lg p-3 mb-4">
+                  <h4 className="font-semibold mb-2 text-sm">Examples:</h4>
+                  <ul className="text-xs space-y-1">
+                    {benefit.examples.map((example, eIdx) => (
+                      <li key={eIdx} className="flex items-center gap-2">
+                        <CheckCircle size={12} className="text-accent" />
+                        {example}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <blockquote className="text-xs italic text-muted-foreground border-l-2 border-accent pl-3 mb-2">
+                  "{benefit.hadith}"
+                </blockquote>
+                <p className="text-xs text-accent font-medium">- {benefit.reference}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }
 

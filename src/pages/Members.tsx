@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import useMembers, { type Member, type CreateMemberData, type MemberFilters } from "@/hooks/useMembers";
+import useMembers, { type Member, type CreateMemberData } from "@/hooks/useMembers";
 import { 
   Search, 
   UserPlus, 
@@ -235,7 +235,7 @@ export default function MembersPage() {
   });
 
   return (
-    <PageLayout title="Members" subtitle="Manage HUMSJ IT Sector members" currentPath={location.pathname} onNavigate={navigate}>
+    <PageLayout title="Members" subtitle="Manage HUMSJ Academic Sector members" currentPath={location.pathname} onNavigate={navigate}>
       <div className="space-y-6 animate-fade-in">
         {/* Error Display */}
         {error && (
@@ -590,13 +590,17 @@ function MemberCard({
   delay, 
   isAdmin, 
   onApprove, 
-  onReject 
+  onReject,
+  onEdit,
+  onDelete
 }: { 
   member: Member; 
   delay: number; 
   isAdmin: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onEdit: (member: Member) => void;
+  onDelete: (id: string) => void;
 }) {
   const status = statusConfig[member.status];
   const StatusIcon = status.icon;
@@ -610,19 +614,39 @@ function MemberCard({
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
             <span className="text-lg font-bold text-primary-foreground">
-              {member.name.split(' ').map(n => n[0]).join('')}
+              {member.full_name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           <div>
-            <h3 className="font-semibold">{member.name}</h3>
+            <h3 className="font-semibold">{member.full_name}</h3>
             {member.role && (
               <span className="text-xs text-secondary font-medium">{member.role}</span>
             )}
           </div>
         </div>
-        <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-          <MoreVertical size={18} className="text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-1">
+          {isAdmin && (
+            <>
+              <button 
+                onClick={() => onEdit(member)}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                title="Edit member"
+              >
+                <Edit size={16} className="text-muted-foreground" />
+              </button>
+              <button 
+                onClick={() => onDelete(member.id)}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                title="Delete member"
+              >
+                <Trash2 size={16} className="text-red-500" />
+              </button>
+            </>
+          )}
+          <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+            <MoreVertical size={16} className="text-muted-foreground" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2.5 text-sm">
@@ -630,24 +654,30 @@ function MemberCard({
           <Mail size={14} />
           <span className="truncate">{member.email}</span>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Phone size={14} />
-          <span>{member.phone}</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <GraduationCap size={14} />
-          <span className="truncate">{member.department} • Year {member.year}</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <MapPin size={14} />
-          <span className="truncate">{member.college}</span>
-        </div>
+        {member.phone && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Phone size={14} />
+            <span>{member.phone}</span>
+          </div>
+        )}
+        {member.department && member.year && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <GraduationCap size={14} />
+            <span className="truncate">{member.department} • Year {member.year}</span>
+          </div>
+        )}
+        {member.college && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin size={14} />
+            <span className="truncate">{member.college}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Calendar size={12} />
-          <span>Joined {new Date(member.joinDate).toLocaleDateString()}</span>
+          <span>Joined {new Date(member.created_at).toLocaleDateString()}</span>
         </div>
         <span className={cn("flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium", status.color)}>
           <StatusIcon size={12} />

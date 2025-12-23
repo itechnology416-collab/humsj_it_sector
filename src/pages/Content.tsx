@@ -141,7 +141,7 @@ export default function ContentPage() {
           type: "video",
           category: "Workshop",
           size: "890 MB",
-          uploadedBy: "IT Sector",
+          uploadedBy: "Academic Sector",
           uploadedAt: "2024-02-05",
           views: 78,
           downloads: 34

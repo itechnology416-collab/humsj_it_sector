@@ -96,4 +96,4 @@ For technical support or questions about the platform, contact the HUMSJ IT Sect
 
 ---
 
-**Built with ❤️ for the HUMSJ Community**
+**Developed for the HUMSJ Community**

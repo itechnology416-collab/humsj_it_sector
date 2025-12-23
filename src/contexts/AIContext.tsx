@@ -9,6 +9,11 @@ interface AIContextType {
   aiRecommendations: AIRecommendation[];
   refreshRecommendations: () => void;
   aiInsights: AIInsights;
+  // Voice Assistant Features
+  isVoiceAssistantOpen: boolean;
+  toggleVoiceAssistant: () => void;
+  voiceSettings: VoiceSettings;
+  updateVoiceSettings: (settings: Partial<VoiceSettings>) => void;
 }
 
 interface AIRecommendation {
@@ -29,6 +34,15 @@ interface AIInsights {
   lastUpdated: Date;
 }
 
+interface VoiceSettings {
+  preferredLanguage: string;
+  speechRate: number;
+  speechPitch: number;
+  speechVolume: number;
+  autoTranslate: boolean;
+  voiceName: string;
+}
+
 const AIContext = createContext<AIContextType | undefined>(undefined);
 
 export function AIProvider({ children }: { children: React.ReactNode }) {
@@ -42,6 +56,17 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     communityEngagement: 0,
     overallWellness: 0,
     lastUpdated: new Date()
+  });
+
+  // Voice Assistant States
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
+    preferredLanguage: 'en',
+    speechRate: 1,
+    speechPitch: 1,
+    speechVolume: 1,
+    autoTranslate: false,
+    voiceName: ''
   });
 
   // Generate AI recommendations based on user data
@@ -118,6 +143,15 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     setAIInsights(generateInsights());
   };
 
+  // Voice Assistant Functions
+  const toggleVoiceAssistant = () => {
+    setIsVoiceAssistantOpen(!isVoiceAssistantOpen);
+  };
+
+  const updateVoiceSettings = (settings: Partial<VoiceSettings>) => {
+    setVoiceSettings(prev => ({ ...prev, ...settings }));
+  };
+
   // Initialize AI data when user logs in
   useEffect(() => {
     if (user) {
@@ -144,7 +178,12 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     minimizeAIAssistant,
     aiRecommendations,
     refreshRecommendations,
-    aiInsights
+    aiInsights,
+    // Voice Assistant
+    isVoiceAssistantOpen,
+    toggleVoiceAssistant,
+    voiceSettings,
+    updateVoiceSettings
   };
 
   return (

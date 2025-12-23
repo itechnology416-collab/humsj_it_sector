@@ -132,8 +132,8 @@ export default function Downloads() {
     },
     {
       id: 8,
-      title: "IT Sector Guidelines",
-      description: "Complete guidelines and procedures for IT sector operations",
+      title: "Academic Sector Guidelines",
+      description: "Complete guidelines and procedures for academic sector operations",
       category: "documents",
       type: "PDF",
       size: "1.8 MB",

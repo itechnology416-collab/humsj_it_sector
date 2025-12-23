@@ -60,7 +60,7 @@ export default function CommunicationPage() {
     { value: "all", label: "All Members", count: 234 },
     { value: "active", label: "Active Members", count: 198 },
     { value: "coordinators", label: "Coordinators", count: 25 },
-    { value: "it_sector", label: "IT Sector", count: 45 },
+    { value: "academic_sector", label: "Academic Sector", count: 45 },
     { value: "education_sector", label: "Education Sector", count: 38 },
     { value: "new_members", label: "New Members", count: 12 }
   ];
@@ -104,7 +104,7 @@ export default function CommunicationPage() {
           recipientCount: 45,
           sentAt: "2024-02-16T09:00:00",
           status: "scheduled",
-          sender: "IT Sector",
+          sender: "Academic Sector",
           scheduledFor: "2024-02-16T09:00:00"
         },
         {
@@ -235,6 +235,102 @@ export default function CommunicationPage() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* HUMSJ Information Channels */}
+        <div className="bg-card rounded-xl p-6 border border-border/30">
+          <h2 className="text-xl font-display tracking-wide mb-4">HUMSJ Information Channels</h2>
+          <p className="text-muted-foreground mb-6 text-sm">
+            Connect with different HUMSJ sectors through our official Telegram channels for specialized information and updates.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                name: "Academic Sector",
+                description: "Academic programs & scholarships",
+                url: "https://t.me/HUMSJ_accdamic",
+                icon: "🎓",
+                color: "bg-blue-500/10 text-blue-600 border-blue-500/20"
+              },
+              {
+                name: "Academic Sector",
+                description: "Educational support & academic programs",
+                url: "https://t.me/Information_sector_of_Humsj",
+                icon: "💻",
+                color: "bg-green-500/10 text-green-600 border-green-500/20"
+              },
+              {
+                name: "Da'ewa (Amharic)",
+                description: "Islamic guidance in Amharic",
+                url: "https://t.me/HRUMUSLIMSTUDENTSJEMEA",
+                icon: "📚",
+                color: "bg-purple-500/10 text-purple-600 border-purple-500/20"
+              },
+              {
+                name: "Da'ewa (Afaan Oromoo)",
+                description: "Islamic guidance in Afaan Oromoo",
+                url: "https://t.me/HUMSJsectoroffajrulislam",
+                icon: "📖",
+                color: "bg-orange-500/10 text-orange-600 border-orange-500/20"
+              },
+              {
+                name: "External Affairs",
+                description: "Partnerships & outreach programs",
+                url: "https://t.me/+VMJzgG5c24djM2Rk",
+                icon: "🤝",
+                color: "bg-teal-500/10 text-teal-600 border-teal-500/20"
+              },
+              {
+                name: "Comparative Religion",
+                description: "Interfaith dialogue & religious studies",
+                url: "https://t.me/HUMSJComparative",
+                icon: "🕊️",
+                color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"
+              },
+              {
+                name: "Financial Sector",
+                description: "Beytal Maal financial services",
+                url: "#",
+                icon: "💰",
+                color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+                disabled: true
+              }
+            ].map((channel) => (
+              <div
+                key={channel.name}
+                className={cn(
+                  "relative p-4 rounded-lg border transition-all",
+                  channel.disabled 
+                    ? "opacity-50 cursor-not-allowed bg-muted/30" 
+                    : "hover:scale-105 cursor-pointer",
+                  channel.color
+                )}
+                onClick={() => !channel.disabled && window.open(channel.url, '_blank')}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-xl flex-shrink-0">
+                    {channel.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm mb-1">
+                      {channel.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {channel.description}
+                    </p>
+                  </div>
+                  {!channel.disabled && (
+                    <MessageSquare size={14} className="flex-shrink-0 opacity-70" />
+                  )}
+                </div>
+                {channel.disabled && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                    <span className="text-xs text-muted-foreground">Contact for info</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Messages Sent" value={stats.sent} icon={CheckCircle} color="primary" />

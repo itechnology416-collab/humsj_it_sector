@@ -3,22 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HUMSJ Information Technology Sector</title>
-    <meta name="description" content="Haramaya University Muslim Student Jama'a IT Management System" />
-    <meta name="author" content="HUMSJ IT Sector" />
+    <title>HUMSJ IT Sector</title>
+    <meta name="description" content="Haramaya University Muslim Student Jama'a Academic & Education Management System" />
+    <meta name="author" content="HUMSJ Academic Sector" />
 
-    <meta property="og:title" content="HUMSJ Information Technology Sector" />
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#059669" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="HUMSJ" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="HUMSJ" />
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <link rel="apple-touch-icon" href="/logo.jpg" />
+    <link rel="mask-icon" href="/logo.jpg" color="#059669" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <meta property="og:title" content="HUMSJ Academic & Education Sector" />
     <meta property="og:description" content="Haramaya University Muslim Student Jama'a IT Management System" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/placeholder.svg" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@HUMSJ_IT" />
-    <meta name="twitter:image" content="/placeholder.svg" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New content is available, prompt user to refresh
+                      if (confirm('New version available! Refresh to update?')) {
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+
+        // Handle service worker updates
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+      }
+
+      // PWA Install Prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button or banner
+        const installBanner = document.createElement('div');
+        installBanner.innerHTML = `
+          <div style="position: fixed; bottom: 20px; right: 20px; background: #059669; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; font-family: system-ui;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span>Install HUMSJ App</span>
+              <button onclick="installPWA()" style="background: white; color: #059669; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 500;">Install</button>
+              <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px; padding: 0; margin-left: 8px;">×</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(installBanner);
+      });
+
+      window.installPWA = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          deferredPrompt = null;
+          
+          // Remove install banner
+          const banner = document.querySelector('[style*="position: fixed"]');
+          if (banner) banner.remove();
+        }
+      };
+    </script>
   </body>
 </html>

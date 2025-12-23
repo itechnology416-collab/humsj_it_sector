@@ -15,6 +15,7 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   status: string | null;
+  gender: string | null;
 }
 
 interface UserRole {
@@ -28,7 +29,7 @@ interface AuthContextType {
   roles: string[];
   isAdmin: boolean;
   isLoading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, gender: string, faceData?: string | null) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -56,6 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (profileData) {
       setProfile(profileData);
+      // Store gender in localStorage for routing logic
+      if (profileData.gender) {
+        localStorage.setItem('userGender', profileData.gender);
+      }
     }
 
     const { data: rolesData } = await supabase
@@ -104,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, gender: string, faceData?: string | null) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -114,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          gender: gender,
+          face_data: faceData,
         },
       },
     });

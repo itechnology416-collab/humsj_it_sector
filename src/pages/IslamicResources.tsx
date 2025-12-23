@@ -20,7 +20,9 @@ import {
   Sparkles,
   Tag,
   Calendar,
-  User
+  User,
+  Youtube,
+  Play
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -415,6 +417,117 @@ export default function IslamicResources() {
             </div>
           </div>
         )}
+
+        {/* External Islamic Resources */}
+        <div>
+          <h2 className="text-2xl font-display mb-6 flex items-center gap-2">
+            <Globe className="text-blue-500" size={24} />
+            External Islamic Resources
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Dr. Zakir Naik YouTube Channel */}
+            <div className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300 hover:scale-105 group">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0">
+                  <Youtube size={24} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                    Dr. Zakir Naik Channel
+                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-xs">
+                      <Video size={12} className="mr-1" />
+                      Video Lectures
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      English
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                Comprehensive Islamic lectures, Q&A sessions, and comparative religion discussions 
+                by renowned Islamic scholar Dr. Zakir Naik. Educational content covering various 
+                aspects of Islam with logical and scientific approach.
+              </p>
+
+              <div className="flex flex-wrap gap-1 mb-4">
+                {['Islamic Lectures', 'Q&A', 'Comparative Religion', 'Dawah', 'Scientific Approach'].map(tag => (
+                  <span key={tag} className="text-xs px-2 py-1 bg-secondary rounded-md">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <User size={14} />
+                    Dr. Zakir Naik
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Globe size={14} />
+                    YouTube
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-sm">
+                  <Star size={14} className="text-amber-500 fill-amber-500" />
+                  <span className="text-muted-foreground">4.8</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => window.open('https://www.youtube.com/@Drzakirchannel', '_blank')}
+                  className="flex-1 gap-2 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Play size={14} />
+                  Watch Videos
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText('https://www.youtube.com/@Drzakirchannel');
+                    toast.success('Link copied to clipboard');
+                  }}
+                  className="gap-1"
+                >
+                  <Share2 size={14} />
+                  Share
+                </Button>
+              </div>
+            </div>
+
+            {/* Placeholder for future external resources */}
+            <div className="bg-card rounded-xl p-6 border border-border/30 border-dashed opacity-60">
+              <div className="text-center py-8">
+                <Globe size={32} className="mx-auto text-muted-foreground mb-3" />
+                <h3 className="font-semibold mb-2">More Resources Coming Soon</h3>
+                <p className="text-sm text-muted-foreground">
+                  We're continuously adding more external Islamic resources and educational content.
+                </p>
+              </div>
+            </div>
+
+            {/* Placeholder for future external resources */}
+            <div className="bg-card rounded-xl p-6 border border-border/30 border-dashed opacity-60">
+              <div className="text-center py-8">
+                <BookOpen size={32} className="mx-auto text-muted-foreground mb-3" />
+                <h3 className="font-semibold mb-2">Suggest a Resource</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Know of a valuable Islamic resource? Let us know and we'll consider adding it.
+                </p>
+                <Button size="sm" variant="outline">
+                  Suggest Resource
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Regular Resources */}
         <div>

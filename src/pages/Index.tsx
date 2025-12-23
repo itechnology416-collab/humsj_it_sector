@@ -2,6 +2,8 @@ import { useEffect, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
+import IslamicSpaceFiller from "@/components/islamic/IslamicSpaceFiller";
 import { 
   ArrowRight, 
   Users, 
@@ -45,18 +47,66 @@ import {
 } from "lucide-react";
 import NetflixScene from "@/components/3d/NetflixScene";
 import Enhanced3DScene from "@/components/3d/Enhanced3DScene";
+import UniverseBackground from "@/components/3d/UniverseBackground";
 import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
-import { 
-  TimelineOfIslamicCivilization, 
-  LifeOfProphetMuhammad, 
-  SahabaHeroesOfFaith, 
-  IslamInEthiopia 
-} from "@/components/islamic/IslamicSections";
+import { RotatingQuranVerses } from "@/components/islamic/RotatingQuranVerses";
 
 export default function Index() {
   const { user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
+  const [currentHeroVerseIndex, setCurrentHeroVerseIndex] = useState(0);
+
+  const heroScientificVerses = [
+    {
+      arabic: "وَجَعَلْنَا مِنَ الْمَاءِ كُلَّ شَيْءٍ حَيٍّ",
+      english: "And We made from water every living thing",
+      reference: "Quran 21:30",
+      theme: "Origin of Life",
+      icon: "💧",
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      arabic: "وَالسَّمَاءَ بَنَيْنَاهَا بِأَيْدٍ وَإِنَّا لَمُوسِعُونَ",
+      english: "And the heaven We constructed with strength, and indeed, We are [its] expander",
+      reference: "Quran 51:47",
+      theme: "Expanding Universe",
+      icon: "🌌",
+      color: "from-purple-500 to-violet-500"
+    },
+    {
+      arabic: "وَكُلٌّ فِي فَلَكٍ يَسْبَحُونَ",
+      english: "And all, in an orbit, are swimming",
+      reference: "Quran 21:33",
+      theme: "Celestial Orbits",
+      icon: "🪐",
+      color: "from-orange-500 to-red-500"
+    },
+    {
+      arabic: "أَوَلَمْ يَرَ الَّذِينَ كَفَرُوا أَنَّ السَّمَاوَاتِ وَالْأَرْضَ كَانَتَا رَتْقًا فَفَتَقْنَاهُمَا",
+      english: "Have those who disbelieved not considered that the heavens and the earth were a joined entity, and We separated them",
+      reference: "Quran 21:30",
+      theme: "Big Bang Theory",
+      icon: "💥",
+      color: "from-yellow-500 to-orange-500"
+    },
+    {
+      arabic: "وَالْجِبَالَ أَوْتَادًا",
+      english: "And the mountains as stakes",
+      reference: "Quran 78:7",
+      theme: "Mountain Structure",
+      icon: "⛰️",
+      color: "from-green-500 to-emerald-500"
+    },
+    {
+      arabic: "وَأَنزَلْنَا الْحَدِيدَ فِيهِ بَأْسٌ شَدِيدٌ وَمَنَافِعُ لِلنَّاسِ",
+      english: "And We sent down iron, wherein is great military might and benefits for the people",
+      reference: "Quran 57:25",
+      theme: "Iron from Space",
+      icon: "🔗",
+      color: "from-gray-500 to-slate-500"
+    }
+  ];
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -83,12 +133,20 @@ export default function Index() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Rotate hero scientific verses every 8 seconds
+  useEffect(() => {
+    const heroVerseTimer = setInterval(() => {
+      setCurrentHeroVerseIndex((prev) => (prev + 3) % heroScientificVerses.length);
+    }, 8000);
+    return () => clearInterval(heroVerseTimer);
+  }, [heroScientificVerses.length]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
-          <p className="text-muted-foreground animate-pulse">Loading HUMSJ INFORMATION TECHNOLOGY SECTOR WEB...</p>
+          <p className="text-muted-foreground animate-pulse">Loading HUMSJ Experience...</p>
         </div>
       </div>
     );
@@ -135,21 +193,18 @@ export default function Index() {
 
   const testimonials = [
     {
-      name: "Ahmed Hassan",
-      role: "IT Sector Head",
-      image: "/placeholder.svg",
+      name: "Yusuf Usman",
+      role: "Information Technology Sector Head",
       quote: "This system has revolutionized how we manage our Jama'a. The efficiency gains are remarkable, and member engagement has increased by 300%."
     },
     {
       name: "Fatima Ali",
       role: "Education Coordinator",
-      image: "/placeholder.svg",
       quote: "The content management system makes it so easy to share Islamic resources. Our members now have access to a wealth of knowledge at their fingertips."
     },
     {
       name: "Mohammed Ibrahim",
       role: "Da'wa Coordinator",
-      image: "/placeholder.svg",
       quote: "The communication features have transformed how we reach our members. We can now send targeted messages and track engagement effectively."
     }
   ];
@@ -165,6 +220,9 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Universe Background */}
+      <UniverseBackground variant="index" />
+      
       <Suspense fallback={<div className="absolute inset-0 bg-background" />}>
         <NetflixScene />
         <Enhanced3DScene />
@@ -187,15 +245,19 @@ export default function Index() {
 
       {/* Hero Section - Light of Islam */}
       <section className="section min-h-screen flex items-center justify-center relative pt-20">
-        {/* Mosque Background Image */}
+        {/* Full Screen Mosque Background Image - Enhanced for full horizontal coverage */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat mosque-background mosque-silhouette"
+          className="mosque-hero-background"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'%3E%3Cdefs%3E%3ClinearGradient id='mosque-gradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23059669;stop-opacity:0.4'/%3E%3Cstop offset='50%25' style='stop-color:%230891b2;stop-opacity:0.3'/%3E%3Cstop offset='100%25' style='stop-color:%230284c7;stop-opacity:0.2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23mosque-gradient)'%3E%3C!-- Main Mosque Structure --%3E%3Crect x='200' y='300' width='400' height='200' rx='10'/%3E%3C!-- Central Dome --%3E%3Cellipse cx='400' cy='280' rx='80' ry='60'/%3E%3C!-- Side Domes --%3E%3Cellipse cx='280' cy='300' rx='40' ry='30'/%3E%3Cellipse cx='520' cy='300' rx='40' ry='30'/%3E%3C!-- Minarets --%3E%3Crect x='150' y='150' width='30' height='200' rx='15'/%3E%3Crect x='620' y='150' width='30' height='200' rx='15'/%3E%3C!-- Minaret Tops --%3E%3Cellipse cx='165' cy='140' rx='20' ry='15'/%3E%3Cellipse cx='635' cy='140' rx='20' ry='15'/%3E%3C!-- Crescent Moons --%3E%3Cpath d='M 160 125 Q 170 115 165 135 Q 155 125 160 125' /%3E%3Cpath d='M 630 125 Q 640 115 635 135 Q 625 125 630 125' /%3E%3Cpath d='M 395 220 Q 405 210 400 230 Q 390 220 395 220' /%3E%3C!-- Arched Windows --%3E%3Cpath d='M 320 350 Q 320 330 340 330 Q 360 330 360 350 L 360 400 L 320 400 Z' fill='%23000000' fill-opacity='0.2'/%3E%3Cpath d='M 440 350 Q 440 330 460 330 Q 480 330 480 350 L 480 400 L 440 400 Z' fill='%23000000' fill-opacity='0.2'/%3E%3C!-- Main Entrance --%3E%3Cpath d='M 370 400 Q 370 370 400 370 Q 430 370 430 400 L 430 500 L 370 500 Z' fill='%23000000' fill-opacity='0.3'/%3E%3C!-- Islamic Geometric Patterns --%3E%3Cg opacity='0.3'%3E%3Cpath d='M 250 450 L 270 430 L 290 450 L 270 470 Z' fill='%23059669'/%3E%3Cpath d='M 510 450 L 530 430 L 550 450 L 530 470 Z' fill='%230891b2'/%3E%3Cpath d='M 380 320 L 400 300 L 420 320 L 400 340 Z' fill='%230284c7'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            backgroundImage: `url("/mosques.jpg")`
           }}
         />
         
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background pointer-events-none" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        
+        {/* Additional gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/30 pointer-events-none" />
         
         {/* Islamic Background Pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -206,37 +268,49 @@ export default function Index() {
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           <div className="animate-fade-in">
-            {/* Quranic Verse */}
+            {/* 360 Degree Rotating Quranic Verses */}
             <div className="mb-12">
               <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-6 py-2 mb-6">
                 <Sparkles size={16} className="text-green-500 animate-pulse" />
                 <span className="text-sm text-green-600 font-medium">Light of Islam</span>
               </div>
               
-              <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 border border-border/30 mb-8 max-w-4xl mx-auto">
-                <p className="text-2xl md:text-3xl font-arabic text-primary mb-4 leading-relaxed" dir="rtl">
-                  وَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ
-                </p>
-                <p className="text-lg text-muted-foreground italic mb-2">
-                  "And We have not sent you, [O Muhammad], except as a mercy to the worlds"
-                </p>
-                <p className="text-sm text-muted-foreground">- Quran 21:107</p>
+              <RotatingQuranVerses 
+                verses={heroScientificVerses}
+                rotationSpeed={8}
+                className="mb-8"
+              />
+
+              {/* Scientific Miracles Indicator */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-2">
+                  <span className="text-xs text-emerald-600 font-medium">🔬 Scientific Miracles in the Quran</span>
+                  <div className="flex gap-1">
+                    {[0, 1, 2].map((dot) => (
+                      <div
+                        key={dot}
+                        className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"
+                        style={{ animationDelay: `${dot * 200}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             
             <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-6 py-2 mb-8">
               <Sparkles size={16} className="text-primary animate-pulse" />
-              <span className="text-sm text-primary font-medium">Revolutionizing Islamic Student Management</span>
+              <span className="text-sm text-primary font-medium">HUMSJ IT Sector</span>
             </div>
             
-            <h1 className="text-6xl md:text-8xl font-display tracking-wide mb-8 leading-tight">
-              <span className="block text-foreground">HARAMAYA UNIVERSITY</span>
-              <span className="block bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent animate-gradient-x">
+            <h1 className="text-6xl md:text-8xl font-display tracking-wide mb-8 leading-tight text-white drop-shadow-2xl">
+              <span className="block text-white drop-shadow-lg">HARAMAYA UNIVERSITY</span>
+              <span className="block bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent animate-gradient-x drop-shadow-lg">
                 MUSLIM STUDENT JAMA'A
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
               A comprehensive, modern IT Management System designed to digitize operations, 
               enhance member engagement, streamline communication, and strengthen our Islamic community 
               through technology and innovation - guided by the principles of Islam.
@@ -264,7 +338,7 @@ export default function Index() {
             </div>
 
             {/* Floating Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mb-8">
               {[
                 { value: "500+", label: "Active Members", icon: Users },
                 { value: "50+", label: "Events Yearly", icon: Calendar },
@@ -273,7 +347,7 @@ export default function Index() {
               ].map((stat, index) => (
                 <div 
                   key={stat.label} 
-                  className="bg-card/80 backdrop-blur-sm rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300 animate-slide-up group card-3d hover-lift hover-glow interactive-hover"
+                  className="bg-card/90 backdrop-blur-md rounded-xl p-6 border border-border/50 hover:border-primary/50 transition-all duration-300 animate-slide-up group card-3d hover-lift hover-glow interactive-hover shadow-2xl"
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 mx-auto group-hover:bg-primary/20 transition-colors group-hover:animate-3d-bounce">
@@ -284,15 +358,31 @@ export default function Index() {
                 </div>
               ))}
             </div>
+
+            {/* Scientific Verses Ticker */}
+            <div className="bg-card/60 backdrop-blur-md rounded-full p-3 border border-border/40 max-w-5xl mx-auto overflow-hidden shadow-2xl">
+              <div className="flex items-center gap-8 animate-scroll-x">
+                {[
+                  { text: "وَجَعَلْنَا مِنَ الْمَاءِ كُلَّ شَيْءٍ حَيٍّ", theme: "Origin of Life", icon: "💧" },
+                  { text: "وَالسَّمَاءَ بَنَيْنَاهَا بِأَيْدٍ وَإِنَّا لَمُوسِعُونَ", theme: "Expanding Universe", icon: "🌌" },
+                  { text: "وَكُلٌّ فِي فَلَكٍ يَسْبَحُونَ", theme: "Celestial Orbits", icon: "🪐" },
+                  { text: "وَالْجِبَالَ أَوْتَادًا", theme: "Mountain Structure", icon: "⛰️" },
+                  { text: "وَأَنزَلْنَا الْحَدِيدَ", theme: "Iron from Space", icon: "🔗" }
+                ].map((verse, index) => (
+                  <div key={index} className="flex items-center gap-3 whitespace-nowrap">
+                    <span className="text-lg">{verse.icon}</span>
+                    <div className="text-right">
+                      <p className="text-sm font-arabic text-primary">{verse.text}</p>
+                      <p className="text-xs text-muted-foreground">{verse.theme}</p>
+                    </div>
+                    {index < 4 && <div className="w-px h-8 bg-border/30 mx-4"></div>}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Islamic Heritage Sections */}
-      <TimelineOfIslamicCivilization />
-      <LifeOfProphetMuhammad />
-      <SahabaHeroesOfFaith />
-      <IslamInEthiopia />
 
       {/* Core Public Pages Navigation */}
       <section className="section py-32 relative">
@@ -458,10 +548,10 @@ export default function Index() {
             </div>
           </div>
 
-          {/* IT Sector Specific Pages */}
+          {/* Information Technology Sector Pages */}
           <div className="mb-16">
             <h3 className="text-3xl font-display tracking-wide text-center mb-12">
-              IT Sector <span className="text-secondary">Management</span>
+              Information Technology <span className="text-secondary">Management</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
@@ -727,8 +817,29 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Islamic Educational Content - Between Hero and Features */}
+      <section className="py-16 bg-gradient-to-r from-secondary/20 via-card to-secondary/20">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-display tracking-wide mb-4">
+              Islamic <span className="text-primary">Wisdom</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Enriching our technological journey with timeless Islamic knowledge and guidance
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <IslamicEducationFiller type="mixed" size="large" />
+            <IslamicSpaceFiller preferredContent="educational" minHeight={400} maxHeight={500} />
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
-      <section id="features" className="section min-h-screen py-32 relative">
+      <section 
+        id="features" 
+        className="section min-h-screen py-32 relative"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
@@ -1897,6 +2008,173 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Scientific Quranic Verses Section */}
+      <section className="section min-h-screen py-32 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-6 py-2 mb-6">
+              <BookOpen size={16} className="text-emerald-500 animate-pulse" />
+              <span className="text-sm text-emerald-600 font-medium">Scientific Miracles</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-display tracking-wide mb-6">
+              Quran & <span className="text-emerald-500">Modern Science</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Discover the remarkable scientific insights revealed in the Holy Quran over 1400 years ago, 
+              now confirmed by modern scientific discoveries.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                arabic: "وَجَعَلْنَا مِنَ الْمَاءِ كُلَّ شَيْءٍ حَيٍّ",
+                english: "And We made from water every living thing",
+                reference: "Quran 21:30",
+                theme: "Origin of Life",
+                science: "Modern biology confirms that all life forms originated from water and that water is essential for all living organisms.",
+                icon: "💧",
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                arabic: "وَالسَّمَاءَ بَنَيْنَاهَا بِأَيْدٍ وَإِنَّا لَمُوسِعُونَ",
+                english: "And the heaven We constructed with strength, and indeed, We are [its] expander",
+                reference: "Quran 51:47",
+                theme: "Expanding Universe",
+                science: "Edwin Hubble's 1929 discovery confirmed that the universe is indeed expanding, as stated in the Quran.",
+                icon: "🌌",
+                color: "from-purple-500 to-violet-500"
+              },
+              {
+                arabic: "وَكُلٌّ فِي فَلَكٍ يَسْبَحُونَ",
+                english: "And all, in an orbit, are swimming",
+                reference: "Quran 21:33",
+                theme: "Celestial Orbits",
+                science: "Modern astronomy has confirmed that all celestial bodies move in precise orbital paths through space.",
+                icon: "🪐",
+                color: "from-orange-500 to-red-500"
+              },
+              {
+                arabic: "أَوَلَمْ يَرَ الَّذِينَ كَفَرُوا أَنَّ السَّمَاوَاتِ وَالْأَرْضَ كَانَتَا رَتْقًا فَفَتَقْنَاهُمَا",
+                english: "Have those who disbelieved not considered that the heavens and the earth were a joined entity, and We separated them",
+                reference: "Quran 21:30",
+                theme: "Big Bang Theory",
+                science: "The Big Bang theory describes how the universe began from a single point and expanded, separating into heavens and earth.",
+                icon: "💥",
+                color: "from-yellow-500 to-orange-500"
+              },
+              {
+                arabic: "وَالْجِبَالَ أَوْتَادًا",
+                english: "And the mountains as stakes",
+                reference: "Quran 78:7",
+                theme: "Mountain Structure",
+                science: "Geology reveals that mountains have deep roots extending into the earth, stabilizing the crust like stakes.",
+                icon: "⛰️",
+                color: "from-green-500 to-emerald-500"
+              },
+              {
+                arabic: "وَأَنزَلْنَا الْحَدِيدَ فِيهِ بَأْسٌ شَدِيدٌ وَمَنَافِعُ لِلنَّاسِ",
+                english: "And We sent down iron, wherein is great military might and benefits for the people",
+                reference: "Quran 57:25",
+                theme: "Iron from Space",
+                science: "Modern science confirms that iron on Earth came from meteorites and cosmic sources, literally 'sent down' from space.",
+                icon: "🔗",
+                color: "from-gray-500 to-slate-500"
+              }
+            ].map((verse, index) => (
+              <div 
+                key={index}
+                className="bg-card rounded-2xl p-6 border border-border/30 hover:border-emerald-500/30 transition-all duration-500 hover:scale-105 animate-slide-up group"
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                {/* Theme Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${verse.color} flex items-center justify-center text-2xl`}>
+                    {verse.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{verse.theme}</h3>
+                    <p className="text-xs text-muted-foreground">{verse.reference}</p>
+                  </div>
+                </div>
+
+                {/* Arabic Verse */}
+                <div className="bg-emerald-500/10 rounded-lg p-4 mb-4">
+                  <p className="text-lg font-arabic text-emerald-600 leading-relaxed text-right" dir="rtl">
+                    {verse.arabic}
+                  </p>
+                </div>
+
+                {/* English Translation */}
+                <div className="mb-4">
+                  <p className="text-sm text-foreground italic leading-relaxed">
+                    "{verse.english}"
+                  </p>
+                </div>
+
+                {/* Scientific Explanation */}
+                <div className="bg-secondary/30 rounded-lg p-3">
+                  <h4 className="text-xs font-semibold text-emerald-600 mb-2 uppercase tracking-wide">
+                    Scientific Confirmation
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {verse.science}
+                  </p>
+                </div>
+
+                {/* Hover Effect Indicator */}
+                <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-full h-1 bg-gradient-to-r from-emerald-500/20 via-emerald-500 to-emerald-500/20 rounded-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Additional Scientific Facts */}
+          <div className="mt-20 text-center">
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-emerald-500/20">
+              <h3 className="text-2xl font-display tracking-wide mb-6 text-emerald-600">
+                More Scientific Miracles
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  {
+                    fact: "Embryology",
+                    verse: "Quran 23:12-14",
+                    description: "Detailed stages of human embryonic development"
+                  },
+                  {
+                    fact: "Ocean Barriers",
+                    verse: "Quran 25:53",
+                    description: "Invisible barriers between different bodies of water"
+                  },
+                  {
+                    fact: "Fingerprints",
+                    verse: "Quran 75:4",
+                    description: "Unique fingerprint patterns for identification"
+                  },
+                  {
+                    fact: "Atmospheric Layers",
+                    verse: "Quran 41:12",
+                    description: "Seven layers of the Earth's atmosphere"
+                  }
+                ].map((item, index) => (
+                  <div key={index} className="text-center animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                      <span className="text-2xl">🔬</span>
+                    </div>
+                    <h4 className="font-semibold text-sm mb-1">{item.fact}</h4>
+                    <p className="text-xs text-emerald-600 mb-2">{item.verse}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action Section */}
       <section className="section min-h-screen flex items-center justify-center py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
@@ -1974,14 +2252,29 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Quick Links */}
+            {/* HUMSJ Information Channels */}
             <div>
-              <h3 className="font-display text-lg tracking-wide mb-6">Quick Links</h3>
+              <h3 className="font-display text-lg tracking-wide mb-6">Information Channels</h3>
               <div className="space-y-3">
-                {['Features', 'Technology', 'Community', 'Support'].map((link) => (
-                  <button key={link} className="block text-muted-foreground hover:text-primary transition-colors">
-                    {link}
-                  </button>
+                {[
+                  { name: 'Academic Sector', url: 'https://t.me/HUMSJ_accdamic', icon: '🎓' },
+                  { name: 'IT Sector', url: 'https://t.me/Information_sector_of_Humsj', icon: '💻' },
+                  { name: 'Da\'ewa (Amharic)', url: 'https://t.me/HRUMUSLIMSTUDENTSJEMEA', icon: '📚' },
+                  { name: 'Da\'ewa (Afaan Oromoo)', url: 'https://t.me/HUMSJsectoroffajrulislam', icon: '📖' },
+                  { name: 'External Affairs', url: 'https://t.me/+VMJzgG5c24djM2Rk', icon: '🤝' },
+                  { name: 'Comparative Religion', url: 'https://t.me/HUMSJComparative', icon: '🕊️' }
+                ].map((channel) => (
+                  <a 
+                    key={channel.name}
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group"
+                  >
+                    <span className="text-sm">{channel.icon}</span>
+                    <span className="text-sm group-hover:underline">{channel.name}</span>
+                    <MessageSquare size={12} className="opacity-50 group-hover:opacity-100" />
+                  </a>
                 ))}
               </div>
             </div>
@@ -2008,7 +2301,7 @@ export default function Index() {
 
           <div className="border-t border-border/30 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 HUMSJ Information Technology Sector. All rights reserved. Built with ❤️ for the Islamic community.
+              © 2024 HUMSJ Information Technology Sector. All rights reserved. Developed for the Islamic community.
             </p>
             <p className="text-sm text-muted-foreground font-arabic">
               "وتعاونوا على البر والتقوى ولا تعاونوا على الإثم والعدوان"

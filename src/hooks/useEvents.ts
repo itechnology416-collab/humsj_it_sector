@@ -115,7 +115,7 @@ export const useEvents = () => {
   const [useMockData, setUseMockData] = useState(false);
   const { user, isAdmin } = useAuth();
 
-  const checkTableExists = async () => {
+  const checkTableExists = async (): Promise<boolean> => {
     try {
       // Try to query the events table to see if it exists
       const { error } = await (supabase as any)

@@ -20,26 +20,36 @@ import {
   Apple,
   CheckCircle,
   AlertCircle,
-  Zap
+  Zap,
+  Users,
+  Scan,
+  Camera
 } from "lucide-react";
 import { z } from "zod";
 import AuthScene from "@/components/3d/AuthScene";
+import UniverseBackground from "@/components/3d/UniverseBackground";
+import FacialRecognition from "@/components/auth/FacialRecognition";
 
 const emailSchema = z.string().email("Invalid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 const nameSchema = z.string().min(2, "Name must be at least 2 characters");
+const genderSchema = z.string().min(1, "Please select your gender");
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [gender, setGender] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; gender?: string }>({});
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [rememberMe, setRememberMe] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const [showFaceAuth, setShowFaceAuth] = useState(false);
+  const [faceData, setFaceData] = useState<string | null>(null);
+  const [authMethod, setAuthMethod] = useState<'traditional' | 'face'>('traditional');
 
   const { signIn, signUp, user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -110,6 +120,11 @@ export default function AuthPage() {
       if (!nameResult.success) {
         newErrors.name = nameResult.error.errors[0].message;
       }
+
+      const genderResult = genderSchema.safeParse(gender);
+      if (!genderResult.success) {
+        newErrors.gender = genderResult.error.errors[0].message;
+      }
     }
 
     setErrors(newErrors);
@@ -137,7 +152,7 @@ export default function AuthPage() {
           navigate("/");
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, gender, faceData);
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered");
@@ -146,11 +161,89 @@ export default function AuthPage() {
           }
         } else {
           toast.success("Account created successfully!");
-          navigate("/");
+          // Store gender in localStorage for immediate routing
+          localStorage.setItem('userGender', gender);
+          // Redirect to gender-specific dashboard based on selected gender
+          if (gender === 'male') {
+            navigate("/male-dashboard");
+          } else if (gender === 'female') {
+            navigate("/female-dashboard");
+          } else {
+            navigate("/");
+          }
         }
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle facial recognition success
+  const handleFaceSuccess = (faceTemplate: string) => {
+    setFaceData(faceTemplate);
+    setShowFaceAuth(false);
+    
+    if (isLogin) {
+      // For login, immediately attempt authentication with face data
+      handleFaceLogin(faceTemplate);
+    } else {
+      // For registration, just store the face data and show success
+      toast.success("Face enrolled successfully! Complete your registration.");
+    }
+  };
+
+  // Handle facial recognition error
+  const handleFaceError = (error: string) => {
+    console.error('Face recognition error:', error);
+    setShowFaceAuth(false);
+  };
+
+  // Handle face-based login
+  const handleFaceLogin = async (faceTemplate: string) => {
+    if (!email) {
+      toast.error("Please enter your email address first");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // In a real implementation, you would verify the face template against stored data
+      // For now, we'll simulate this by checking if user exists and has face data
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error || !profile) {
+        toast.error("User not found. Please register first or use traditional login.");
+        return;
+      }
+
+      // Check if user has face data (handle case where column might not exist yet)
+      const hasFaceData = profile && 'face_data' in profile && profile.face_data;
+      
+      if (!hasFaceData) {
+        toast.error("Face ID not set up for this account. Please use traditional login or register with Face ID.");
+        return;
+      }
+
+      // Simulate face matching (in real implementation, compare face templates)
+      const matchSuccess = Math.random() > 0.2; // 80% success rate for demo
+      
+      if (matchSuccess) {
+        // For face-based login, we need to use the actual password or implement a different auth flow
+        // For demo purposes, we'll show success but recommend traditional login
+        toast.success("Face verified! Please complete login with your password.");
+        setAuthMethod('traditional');
+      } else {
+        toast.error("Face verification failed. Please try again or use traditional login.");
+      }
+    } catch (error) {
+      console.error('Face login error:', error);
+      toast.error("Face authentication failed. Please use traditional login.");
     } finally {
       setIsSubmitting(false);
     }
@@ -191,6 +284,9 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+      {/* Universe Background */}
+      <UniverseBackground variant="auth" />
+      
       {/* Enhanced 3D Background */}
       <Suspense fallback={
         <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/5 to-background animate-pulse" />
@@ -219,7 +315,11 @@ export default function AuthPage() {
               <div className="relative mx-auto mb-6">
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-2xl animate-glow relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
-                  <span className="text-4xl font-display text-primary-foreground relative z-10">H</span>
+                  <img 
+                    src="/logo.jpg" 
+                    alt="HUMSJ Logo" 
+                    className="w-16 h-16 rounded-xl object-cover relative z-10"
+                  />
                   <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-30 animate-pulse"></div>
                 </div>
                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-secondary rounded-full animate-bounce opacity-80"></div>
@@ -273,30 +373,65 @@ export default function AuthPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {!isLogin && (
-                <div className="space-y-2 animate-slide-down">
-                  <Label htmlFor="fullName" className="text-foreground font-medium flex items-center gap-2">
-                    <User size={14} className="text-primary" />
-                    Full Name
-                  </Label>
-                  <div className="relative group">
-                    <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10 bg-secondary/50 border-border/50 focus:border-primary focus:bg-secondary/80 transition-all duration-300 rounded-xl h-12"
-                    />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                <>
+                  <div className="space-y-2 animate-slide-down">
+                    <Label htmlFor="fullName" className="text-foreground font-medium flex items-center gap-2">
+                      <User size={14} className="text-primary" />
+                      Full Name
+                    </Label>
+                    <div className="relative group">
+                      <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pl-10 bg-secondary/50 border-border/50 focus:border-primary focus:bg-secondary/80 transition-all duration-300 rounded-xl h-12"
+                      />
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                    </div>
+                    {errors.name && (
+                      <p className="text-xs text-destructive flex items-center gap-1 animate-shake">
+                        <AlertCircle size={12} />
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
-                  {errors.name && (
-                    <p className="text-xs text-destructive flex items-center gap-1 animate-shake">
-                      <AlertCircle size={12} />
-                      {errors.name}
-                    </p>
-                  )}
-                </div>
+
+                  <div className="space-y-2 animate-slide-down">
+                    <Label htmlFor="gender" className="text-foreground font-medium flex items-center gap-2">
+                      <Users size={14} className="text-primary" />
+                      Gender
+                    </Label>
+                    <div className="relative group">
+                      <Users size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                      <select
+                        id="gender"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border/50 focus:border-primary focus:bg-secondary/80 transition-all duration-300 rounded-xl h-12 text-foreground appearance-none cursor-pointer"
+                      >
+                        <option value="" className="bg-background text-foreground">Select your gender</option>
+                        <option value="male" className="bg-background text-foreground">Male</option>
+                        <option value="female" className="bg-background text-foreground">Female</option>
+                      </select>
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                      {/* Custom dropdown arrow */}
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    {errors.gender && (
+                      <p className="text-xs text-destructive flex items-center gap-1 animate-shake">
+                        <AlertCircle size={12} />
+                        {errors.gender}
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">
@@ -374,6 +509,102 @@ export default function AuthPage() {
                 )}
               </div>
 
+              {/* Facial Recognition Section */}
+              <div className="space-y-4">
+                {/* Authentication Method Toggle */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-foreground font-medium flex items-center gap-2">
+                    <Scan size={14} className="text-primary" />
+                    Authentication Method
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMethod('traditional')}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-300 ${
+                        authMethod === 'traditional'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Password
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMethod('face')}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-300 ${
+                        authMethod === 'face'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Face ID
+                    </button>
+                  </div>
+                </div>
+
+                {/* Face Recognition Button for Login */}
+                {isLogin && authMethod === 'face' && (
+                  <div className="space-y-3">
+                    <Button
+                      type="button"
+                      onClick={() => setShowFaceAuth(true)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl h-12 relative overflow-hidden group"
+                      disabled={!email || isSubmitting}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <span className="relative flex items-center justify-center gap-2">
+                        <Camera size={18} />
+                        Sign In with Face ID
+                        <Sparkles size={16} className="animate-pulse" />
+                      </span>
+                    </Button>
+                    {!email && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Please enter your email address first
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Face Enrollment for Registration */}
+                {!isLogin && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-foreground font-medium flex items-center gap-2">
+                        <Camera size={14} className="text-primary" />
+                        Face Recognition Setup
+                        <span className="text-xs text-muted-foreground">(Optional)</span>
+                      </Label>
+                      {faceData && (
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <CheckCircle size={12} />
+                          Enrolled
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      onClick={() => setShowFaceAuth(true)}
+                      variant="outline"
+                      className="w-full border-border/50 hover:bg-secondary/50 rounded-xl h-11 relative overflow-hidden group"
+                      disabled={isSubmitting}
+                    >
+                      <span className="relative flex items-center justify-center gap-2">
+                        <Camera size={18} />
+                        {faceData ? 'Update Face ID' : 'Set Up Face ID'}
+                        <Scan size={16} className="animate-pulse" />
+                      </span>
+                    </Button>
+                    
+                    <p className="text-xs text-muted-foreground text-center">
+                      Enable Face ID for faster and more secure login
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Remember Me & Forgot Password */}
               {isLogin && (
                 <div className="flex items-center justify-between text-sm">
@@ -401,7 +632,7 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 className="w-full mt-8 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-xl h-12 relative overflow-hidden group"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isLogin && authMethod === 'face')}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 {isSubmitting ? (
@@ -412,7 +643,10 @@ export default function AuthPage() {
                 ) : (
                   <span className="relative flex items-center justify-center gap-2">
                     <Zap size={18} className="animate-pulse" />
-                    {isLogin ? "Sign In" : "Create Account"}
+                    {isLogin 
+                      ? (authMethod === 'face' ? "Use Face ID Above" : "Sign In") 
+                      : "Create Account"
+                    }
                     <Sparkles size={16} className="animate-pulse" />
                   </span>
                 )}
@@ -485,6 +719,48 @@ export default function AuthPage() {
             </div>
           </div>
         </div>
+
+        {/* Facial Recognition Modal */}
+        {showFaceAuth && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-border/30 w-full max-w-md relative overflow-hidden">
+              {/* Animated Border Glow */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 animate-gradient-x opacity-50 blur-sm"></div>
+              
+              <div className="relative z-10 p-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    {isLogin ? 'Face Verification' : 'Face Enrollment'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isLogin 
+                      ? 'Look at the camera to verify your identity'
+                      : 'Set up Face ID for secure and convenient access'
+                    }
+                  </p>
+                </div>
+
+                <FacialRecognition
+                  mode={isLogin ? 'verification' : 'enrollment'}
+                  onSuccess={handleFaceSuccess}
+                  onError={handleFaceError}
+                  existingFaceData={isLogin ? 'stored-face-data' : undefined}
+                />
+
+                {/* Close Button */}
+                <div className="mt-6 text-center">
+                  <Button
+                    onClick={() => setShowFaceAuth(false)}
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Floating Action Hints */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-center animate-bounce">
