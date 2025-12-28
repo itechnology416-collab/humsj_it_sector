@@ -213,7 +213,7 @@ export const useWebsiteContent = () => {
 
       setPages(formattedPages);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching website pages:', err);
       setError(err.message || 'Failed to fetch website pages');
       
@@ -312,7 +312,7 @@ export const useWebsiteContent = () => {
       toast.success('Page created successfully!');
       return newPage;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating page:', err);
       toast.error(err.message || 'Failed to create page');
       return null;
@@ -384,7 +384,7 @@ export const useWebsiteContent = () => {
       toast.success('Page updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating page:', err);
       toast.error(err.message || 'Failed to update page');
       return false;
@@ -414,7 +414,7 @@ export const useWebsiteContent = () => {
       toast.success('Page deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting page:', err);
       toast.error(err.message || 'Failed to delete page');
       return false;
@@ -464,7 +464,7 @@ export const useWebsiteContent = () => {
       toast.success('Page published successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error publishing page:', err);
       toast.error(err.message || 'Failed to publish page');
       return false;
@@ -499,7 +499,7 @@ export const useWebsiteContent = () => {
       toast.success('Page unpublished successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error unpublishing page:', err);
       toast.error(err.message || 'Failed to unpublish page');
       return false;
@@ -528,7 +528,7 @@ export const useWebsiteContent = () => {
         page.id === pageId ? { ...page, views: page.views + 1 } : page
       ));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error tracking view:', err);
     }
   }, [useMockData]);

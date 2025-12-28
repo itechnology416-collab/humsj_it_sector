@@ -92,7 +92,7 @@ export const useMembers = () => {
       
       // Try to use the optimized database function first
       try {
-        const { data: membersData, error: membersError } = await (supabase as any).rpc('get_members_with_roles', {
+        const { data: membersData, error: membersError } = await (supabase as unknown).rpc('get_members_with_roles', {
           p_limit: 1000,
           p_offset: 0,
           p_status: null,
@@ -100,7 +100,7 @@ export const useMembers = () => {
         });
 
         if (!membersError && membersData && Array.isArray(membersData)) {
-          const transformedMembers: Member[] = membersData.map((profile: any) => ({
+          const transformedMembers: Member[] = membersData.map((profile: unknown) => ({
             id: profile.id,
             user_id: profile.user_id,
             full_name: profile.full_name || 'Unknown',
@@ -151,7 +151,7 @@ export const useMembers = () => {
       // Create a map of user_id to role for efficient lookup
       const roleMap = new Map<string, string>();
       if (userRoles) {
-        userRoles.forEach((ur: any) => {
+        userRoles.forEach((ur: unknown) => {
           if (ur.user_id) {
             roleMap.set(ur.user_id, ur.role);
           }
@@ -159,7 +159,7 @@ export const useMembers = () => {
       }
 
       // Transform profiles to Member format
-      const transformedMembers: Member[] = (profiles || []).map((profile: any) => ({
+      const transformedMembers: Member[] = (profiles || []).map((profile: unknown) => ({
         id: profile.id,
         user_id: profile.user_id,
         full_name: profile.full_name || 'Unknown',
@@ -182,7 +182,7 @@ export const useMembers = () => {
       setMembers(transformedMembers);
       return transformedMembers;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching members:', error);
       setError(error.message || 'Failed to fetch members');
       toast.error('Failed to load members');
@@ -195,7 +195,7 @@ export const useMembers = () => {
     if (!isAdmin) return [];
 
     try {
-      const { data: invitationData, error: invitationError } = await (supabase as any).rpc('get_member_invitations', {
+      const { data: invitationData, error: invitationError } = await (supabase as unknown).rpc('get_member_invitations', {
         p_status: null, // Get all statuses
         p_limit: 100,
         p_offset: 0
@@ -207,7 +207,7 @@ export const useMembers = () => {
       }
 
       if (invitationData && Array.isArray(invitationData)) {
-        const transformedInvitations: MemberInvitation[] = invitationData.map((invitation: any) => ({
+        const transformedInvitations: MemberInvitation[] = invitationData.map((invitation: unknown) => ({
           id: invitation.id,
           created_at: invitation.created_at,
           updated_at: invitation.updated_at,
@@ -233,7 +233,7 @@ export const useMembers = () => {
       }
 
       return [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.warn('Error fetching invitations:', error);
       return [];
     }
@@ -251,7 +251,7 @@ export const useMembers = () => {
       // Try to get statistics from database function first
       let newStats: MemberStats;
       try {
-        const { data: dbStats, error: statsError } = await (supabase as any).rpc('get_member_statistics');
+        const { data: dbStats, error: statsError } = await (supabase as unknown).rpc('get_member_statistics');
         
         if (!statsError && dbStats) {
           newStats = {
@@ -281,7 +281,7 @@ export const useMembers = () => {
       }
 
       setStats(newStats);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading data:', error);
       setError(error.message || 'Failed to load data');
     } finally {
@@ -300,7 +300,7 @@ export const useMembers = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any).rpc('create_member_invitation', {
+      const { data, error } = await (supabase as unknown).rpc('create_member_invitation', {
         p_full_name: memberData.full_name.trim(),
         p_email: memberData.email.toLowerCase().trim(),
         p_phone: memberData.phone?.trim() || null,
@@ -324,7 +324,7 @@ export const useMembers = () => {
       await loadData(); // Refresh data
       return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating member invitation:', error);
       
       // Provide specific error messages
@@ -345,7 +345,7 @@ export const useMembers = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any).rpc('create_member_request', {
+      const { data, error } = await (supabase as unknown).rpc('create_member_request', {
         p_full_name: memberData.full_name.trim(),
         p_email: memberData.email.toLowerCase().trim(),
         p_phone: memberData.phone?.trim() || null,
@@ -368,7 +368,7 @@ export const useMembers = () => {
       await loadData(); // Refresh data
       return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating member request:', error);
       
       if (error.message?.includes('Email already exists') || error.message?.includes('duplicate')) {
@@ -386,7 +386,7 @@ export const useMembers = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any).rpc('approve_member_request', {
+      const { data, error } = await (supabase as unknown).rpc('approve_member_request', {
         p_invitation_id: invitationId,
         p_approved_role: approvedRole
       });
@@ -404,7 +404,7 @@ export const useMembers = () => {
       await loadData(); // Refresh data
       return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving member request:', error);
       throw new Error(error.message || 'Failed to approve member request');
     }
@@ -417,7 +417,7 @@ export const useMembers = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any).rpc('reject_member_request', {
+      const { data, error } = await (supabase as unknown).rpc('reject_member_request', {
         p_invitation_id: invitationId,
         p_reason: reason || 'No reason provided'
       });
@@ -435,7 +435,7 @@ export const useMembers = () => {
       await loadData(); // Refresh data
       return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting member request:', error);
       throw new Error(error.message || 'Failed to reject member request');
     }
@@ -469,7 +469,7 @@ export const useMembers = () => {
       await loadData(); // Refresh data
       return data;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating member profile:', error);
       throw new Error(error.message || 'Failed to update member profile');
     }
@@ -495,7 +495,7 @@ export const useMembers = () => {
       toast.success('Member deleted successfully');
       await loadData(); // Refresh data
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting member:', error);
       throw new Error(error.message || 'Failed to delete member');
     }

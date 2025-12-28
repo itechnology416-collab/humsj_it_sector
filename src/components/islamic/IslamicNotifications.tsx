@@ -139,7 +139,7 @@ export default function IslamicNotifications({ className }: IslamicNotifications
     const savedNotifications = localStorage.getItem('islamic-notifications');
     if (savedNotifications) {
       const parsed = JSON.parse(savedNotifications);
-      setNotifications(parsed.map((n: any) => ({
+      setNotifications(parsed.map((n: { time: string; [key: string]: unknown }) => ({
         ...n,
         time: new Date(n.time)
       })));

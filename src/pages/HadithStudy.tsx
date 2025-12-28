@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { islamicEducationApi } from "@/services/islamicEducationApi";
 import { 
   Scroll, 
   BookOpen, 

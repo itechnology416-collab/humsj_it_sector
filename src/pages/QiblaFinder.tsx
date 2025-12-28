@@ -183,9 +183,9 @@ export default function QiblaFinder() {
 
   // Request device orientation permission (for iOS 13+)
   const requestOrientationPermission = async () => {
-    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+    if (typeof (DeviceOrientationEvent as unknown).requestPermission === 'function') {
       try {
-        const permission = await (DeviceOrientationEvent as any).requestPermission();
+        const permission = await (DeviceOrientationEvent as unknown).requestPermission();
         if (permission === 'granted') {
           toast.success("Compass access granted");
         } else {

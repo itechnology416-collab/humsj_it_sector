@@ -76,7 +76,7 @@ export default function IslamicSpaceFiller({
       }, 12000);
       return () => clearInterval(interval);
     }
-  }, [showRotation]);
+  }, [showRotation, contentOptions.length]);
 
   // Different content options based on space size
   const contentOptions = [
@@ -277,14 +277,14 @@ export default function IslamicSpaceFiller({
     } else if (selectedContent?.component === 'widget') {
       return (
         <IslamicSidebarWidget 
-          variant={selectedContent.type as any}
+          variant={selectedContent.type as 'prayer-times' | 'daily-verse' | 'islamic-calendar' | 'dhikr-counter' | 'qibla-direction'}
           className="border-none shadow-none bg-transparent"
         />
       );
     } else {
       return (
         <IslamicEducationFiller
-          type={selectedContent?.type as any}
+          type={selectedContent?.type as 'verse' | 'hadith' | 'dua' | 'fact' | 'tip' | 'quote'}
           size={containerHeight > 400 ? 'large' : containerHeight > 250 ? 'medium' : 'small'}
           className="border-none shadow-none bg-transparent"
           showRotation={showRotation}

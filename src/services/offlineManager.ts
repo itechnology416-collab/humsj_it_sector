@@ -3,7 +3,7 @@ import { errorHandler, ErrorCategory, ErrorSeverity } from './errorHandler';
 
 export interface OfflineData {
   key: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   expiresAt?: number;
   version: string;
@@ -13,7 +13,7 @@ export interface SyncQueueItem {
   id: string;
   type: 'CREATE' | 'UPDATE' | 'DELETE';
   endpoint: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   retryCount: number;
   maxRetries: number;
@@ -81,7 +81,7 @@ export class OfflineManager {
   }
 
   // Store data for offline access
-  storeOfflineData(key: string, data: any, expirationHours?: number): void {
+  storeOfflineData(key: string, data: unknown, expirationHours?: number): void {
     const offlineItem: OfflineData = {
       key,
       data,
@@ -127,8 +127,7 @@ export class OfflineManager {
   // Add operation to sync queue
   addToSyncQueue(
     type: SyncQueueItem['type'],
-    endpoint: string,
-    data: any,
+    endpoint: string, data: unknown,
     maxRetries: number = this.maxRetries
   ): string {
     const id = `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

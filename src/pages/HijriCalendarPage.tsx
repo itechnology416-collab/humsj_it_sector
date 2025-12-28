@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import HijriDateDisplay from "@/components/islamic/HijriDateDisplay";
 import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
 
@@ -8,7 +8,7 @@ export default function HijriCalendarPage() {
   const navigate = useNavigate();
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Hijri Calendar" 
       subtitle="Islamic lunar calendar with important dates and events"
       currentPath={location.pathname}
@@ -25,6 +25,6 @@ export default function HijriCalendarPage() {
           </div>
         </div>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

@@ -101,7 +101,7 @@ export const usePrayerReminders = () => {
     } else {
       toast.error('Notification permission required');
     }
-  }, [hasNotificationPermission]);
+  }, [hasNotificationPermission, showPrayerNotification]);
 
   const showPrayerNotification = useCallback((prayer: PrayerTime, minutesBefore: number) => {
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -248,7 +248,7 @@ export const usePrayerReminders = () => {
           
           // Schedule background sync for prayer reminders (if supported)
           if ('sync' in window.ServiceWorkerRegistration.prototype) {
-            (registration as any).sync.register('prayer-reminder');
+            (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('prayer-reminder');
           }
         })
         .catch(error => {

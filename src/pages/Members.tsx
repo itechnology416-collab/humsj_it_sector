@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import useMembers, { type Member, type CreateMemberData } from "@/hooks/useMembers";
+import { 
+  getMembers,
+  getMemberDashboardStats,
+  inviteMember,
+  updateMember,
+  deleteMember,
+  type Member,
+  type MemberFilters
+} from "@/services/memberApi";
 import { 
   Search, 
   UserPlus, 
@@ -63,27 +71,43 @@ const roles = [
   "super_admin"
 ];
 
+interface CreateMemberData {
+  full_name: string;
+  email: string;
+  phone?: string;
+  college: string;
+  department: string;
+  year: number;
+  intended_role: string;
+  notes?: string;
+}
+
+interface MemberStats {
+  totalMembers: number;
+  activeMembers: number;
+  pendingInvitations: number;
+  newMembersThisMonth: number;
+  membersByRole: Record<string, number>;
+  membersByCollege: Record<string, number>;
+}
+
 export default function MembersPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   
-  // Use the custom hook for member management
-  const {
-    combinedMembers,
-    stats,
-    isLoading,
-    error,
-    createMemberInvitation,
-    createMemberRequest,
-    approveMemberRequest,
-    rejectMemberRequest,
-    updateMemberProfile,
-    deleteMember,
-    filterMembers,
-    refreshData,
-    clearError
-  } = useMembers();
+  // State for members and stats
+  const [members, setMembers] = useState<Member[]>([]);
+  const [stats, setStats] = useState<MemberStats>({
+    totalMembers: 0,
+    activeMembers: 0,
+    pendingInvitations: 0,
+    newMembersThisMonth: 0,
+    membersByRole: {},
+    membersByCollege: {}
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Local state for UI
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,6 +128,38 @@ export default function MembersPage() {
     intended_role: "member",
     notes: ""
   });
+
+  // Load members and stats
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [membersResponse, statsResponse] = await Promise.all([
+        getMembers({}, 1, 100), // Load first 100 members
+        getMemberDashboardStats()
+      ]);
+
+      setMembers(membersResponse.members);
+      setStats({
+        totalMembers: statsResponse.totalMembers,
+        activeMembers: statsResponse.activeMembers,
+        pendingInvitations: statsResponse.pendingInvitations,
+        newMembersThisMonth: statsResponse.newMembersThisMonth,
+        membersByRole: statsResponse.membersByRole,
+        membersByCollege: statsResponse.membersByCollege
+      });
+    } catch (err: unknown) {
+      console.error('Error loading data:', err);
+      setError(err.message || 'Failed to load members data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleAddMember = async () => {
     if (!newMember.full_name || !newMember.email || !newMember.college || !newMember.department || !newMember.year) {
@@ -133,13 +189,10 @@ export default function MembersPage() {
         return;
       }
 
-      if (isAdmin) {
-        // Admin creates member invitation
-        await createMemberInvitation(newMember);
-      } else {
-        // Regular user creates member request
-        await createMemberRequest(newMember);
-      }
+      // Create member invitation
+      await inviteMember(newMember.email, newMember.intended_role);
+      
+      toast.success("Member invitation sent successfully!");
 
       // Reset form
       setNewMember({
@@ -154,39 +207,14 @@ export default function MembersPage() {
       });
       setIsAddModalOpen(false);
       
-    } catch (error: any) {
+      // Reload data
+      await loadData();
+      
+    } catch (error: unknown) {
       console.error('Error adding member:', error);
       toast.error(error.message || "Failed to add member. Please try again.");
     } finally {
       setIsAdding(false);
-    }
-  };
-
-  const handleApproveMember = async (memberId: string) => {
-    if (!isAdmin) {
-      toast.error("Only admins can approve members");
-      return;
-    }
-
-    try {
-      await approveMemberRequest(memberId);
-    } catch (error: any) {
-      console.error('Error approving member:', error);
-      toast.error(error.message || "Failed to approve member");
-    }
-  };
-
-  const handleRejectMember = async (memberId: string) => {
-    if (!isAdmin) {
-      toast.error("Only admins can reject members");
-      return;
-    }
-
-    try {
-      await rejectMemberRequest(memberId, "Rejected by admin");
-    } catch (error: any) {
-      console.error('Error rejecting member:', error);
-      toast.error(error.message || "Failed to reject member");
     }
   };
 
@@ -199,10 +227,19 @@ export default function MembersPage() {
     if (!editingMember) return;
 
     try {
-      await updateMemberProfile(editingMember.id, editingMember);
+      await updateMember(editingMember.user_id, {
+        full_name: editingMember.full_name,
+        phone: editingMember.phone,
+        status: editingMember.status
+      });
+      
+      toast.success("Member updated successfully!");
       setIsEditModalOpen(false);
       setEditingMember(null);
-    } catch (error: any) {
+      
+      // Reload data
+      await loadData();
+    } catch (error: unknown) {
       console.error('Error updating member:', error);
       toast.error(error.message || "Failed to update member");
     }
@@ -220,22 +257,44 @@ export default function MembersPage() {
 
     try {
       await deleteMember(memberId);
-    } catch (error: any) {
+      toast.success("Member deleted successfully!");
+      
+      // Reload data
+      await loadData();
+    } catch (error: unknown) {
       console.error('Error deleting member:', error);
       toast.error(error.message || "Failed to delete member");
     }
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
+  const refreshData = () => {
+    loadData();
+  };
+
   // Filter members based on current filters
-  const filteredMembers = filterMembers({
-    searchQuery,
-    college: selectedCollege,
-    status: statusFilter === "all" ? undefined : statusFilter,
-    role: selectedRole === "All Roles" ? undefined : selectedRole
+  const filteredMembers = members.filter(member => {
+    const matchesSearch = searchQuery === "" || 
+      member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCollege = selectedCollege === "All Colleges" || 
+      member.college === selectedCollege;
+    
+    const matchesRole = selectedRole === "All Roles" || 
+      member.role === selectedRole;
+    
+    const matchesStatus = statusFilter === "all" || 
+      member.status === statusFilter;
+
+    return matchesSearch && matchesCollege && matchesRole && matchesStatus;
   });
 
   return (
-    <PageLayout title="Members" subtitle="Manage HUMSJ Academic Sector members" currentPath={location.pathname} onNavigate={navigate}>
+    <ProtectedPageLayout title="Members" subtitle="Manage HUMSJ Academic Sector members" currentPath={location.pathname} onNavigate={navigate}>
       <div className="space-y-6 animate-fade-in">
         {/* Error Display */}
         {error && (
@@ -256,8 +315,8 @@ export default function MembersPage() {
             { label: "Total Members", value: stats.totalMembers, icon: Users, color: "bg-primary/20 text-primary" },
             { label: "Active", value: stats.activeMembers, icon: UserCheck, color: "bg-green-500/20 text-green-600" },
             { label: "Pending Invites", value: stats.pendingInvitations, icon: Mail, color: "bg-blue-500/20 text-blue-600" },
-            { label: "Pending Requests", value: stats.pendingRequests, icon: Clock, color: "bg-yellow-500/20 text-yellow-600" },
-            { label: "Recent Joins", value: stats.recentJoins, icon: TrendingUp, color: "bg-purple-500/20 text-purple-600" },
+            { label: "New This Month", value: stats.newMembersThisMonth, icon: Clock, color: "bg-yellow-500/20 text-yellow-600" },
+            { label: "Total Roles", value: Object.keys(stats.membersByRole).length, icon: TrendingUp, color: "bg-purple-500/20 text-purple-600" },
           ].map((stat, index) => (
             <div 
               key={stat.label}
@@ -489,8 +548,8 @@ export default function MembersPage() {
               )}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
-              {status === "all" && ` (${combinedMembers.length})`}
-              {status !== "all" && ` (${combinedMembers.filter(m => m.status === status).length})`}
+              {status === "all" && ` (${members.length})`}
+              {status !== "all" && ` (${members.filter(m => m.status === status).length})`}
             </button>
           ))}
         </div>
@@ -507,12 +566,10 @@ export default function MembersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredMembers.map((member, index) => (
               <MemberCard 
-                key={member.id} 
+                key={member.user_id} 
                 member={member} 
                 delay={index * 50} 
                 isAdmin={isAdmin}
-                onApprove={handleApproveMember}
-                onReject={handleRejectMember}
                 onEdit={handleEditMember}
                 onDelete={handleDeleteMember}
               />
@@ -581,7 +638,7 @@ export default function MembersPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }
 
@@ -589,16 +646,12 @@ function MemberCard({
   member, 
   delay, 
   isAdmin, 
-  onApprove, 
-  onReject,
   onEdit,
   onDelete
 }: { 
   member: Member; 
   delay: number; 
   isAdmin: boolean;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
   onEdit: (member: Member) => void;
   onDelete: (id: string) => void;
 }) {
@@ -635,7 +688,7 @@ function MemberCard({
                 <Edit size={16} className="text-muted-foreground" />
               </button>
               <button 
-                onClick={() => onDelete(member.id)}
+                onClick={() => onDelete(member.user_id)}
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                 title="Delete member"
               >
@@ -684,29 +737,6 @@ function MemberCard({
           {status.label}
         </span>
       </div>
-
-      {/* Admin approval buttons for pending members */}
-      {isAdmin && member.status === 'pending' && (
-        <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-          <Button
-            size="sm"
-            onClick={() => onApprove(member.id)}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircle size={14} className="mr-1" />
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onReject(member.id)}
-            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-          >
-            <Clock size={14} className="mr-1" />
-            Reject
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

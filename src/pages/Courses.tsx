@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useCourses } from "@/hooks/useCourses";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
+import { courseApi, type Course } from "@/services/courseApi";
 import { 
   BookOpen, 
   Clock, 
@@ -14,171 +14,87 @@ import {
   Search,
   GraduationCap,
   Heart,
-  Globe,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  instructor: string;
-  duration: string;
-  level: "Beginner" | "Intermediate" | "Advanced";
-  category: string;
-  rating: number;
-  students: number;
-  lessons: number;
-  price: "Free" | string;
-  startDate: string;
-  schedule: string;
-  prerequisites?: string[];
-  features: string[];
-  imageUrl?: string;
-}
-
-const coursesData: Course[] = [
-  {
-    id: "1",
-    title: "Quran Recitation for Beginners",
-    description: "Learn proper Quran recitation with Tajweed rules. Perfect for those starting their journey with the Holy Quran.",
-    instructor: "Sheikh Ahmed Al-Mahmoud",
-    duration: "8 weeks",
-    level: "Beginner",
-    category: "Quran Studies",
-    rating: 4.9,
-    students: 245,
-    lessons: 16,
-    price: "Free",
-    startDate: "2024-04-01",
-    schedule: "Tuesdays & Thursdays, 7:00 PM",
-    features: ["Live Sessions", "Recording Available", "Certificate", "Practice Materials"],
-  },
-  {
-    id: "2",
-    title: "Islamic History and Civilization",
-    description: "Comprehensive study of Islamic history from the time of Prophet Muhammad (PBUH) to modern times.",
-    instructor: "Dr. Fatima Hassan",
-    duration: "12 weeks",
-    level: "Intermediate",
-    category: "Islamic History",
-    rating: 4.8,
-    students: 189,
-    lessons: 24,
-    price: "$99",
-    startDate: "2024-04-15",
-    schedule: "Saturdays, 2:00 PM",
-    prerequisites: ["Basic Islamic Knowledge"],
-    features: ["Interactive Discussions", "Historical Documents", "Certificate", "Study Groups"],
-  },
-  {
-    id: "3",
-    title: "Arabic Language Fundamentals",
-    description: "Master the basics of Arabic language to better understand the Quran and Islamic texts.",
-    instructor: "Ustadh Omar Khalil",
-    duration: "16 weeks",
-    level: "Beginner",
-    category: "Arabic Language",
-    rating: 4.7,
-    students: 156,
-    lessons: 32,
-    price: "$149",
-    startDate: "2024-03-25",
-    schedule: "Mondays & Wednesdays, 6:30 PM",
-    features: ["Interactive Exercises", "Speaking Practice", "Writing Assignments", "Certificate"],
-  },
-  {
-    id: "4",
-    title: "Islamic Finance and Economics",
-    description: "Understanding Islamic principles in finance, banking, and economic systems according to Shariah law.",
-    instructor: "Dr. Abdullah Rahman",
-    duration: "10 weeks",
-    level: "Advanced",
-    category: "Islamic Finance",
-    rating: 4.6,
-    students: 98,
-    lessons: 20,
-    price: "$199",
-    startDate: "2024-04-08",
-    schedule: "Sundays, 3:00 PM",
-    prerequisites: ["Basic Economics Knowledge", "Islamic Jurisprudence Basics"],
-    features: ["Case Studies", "Real-world Applications", "Expert Guest Speakers", "Certificate"],
-  },
-  {
-    id: "5",
-    title: "Hadith Studies and Authentication",
-    description: "Learn the science of Hadith, authentication methods, and the major collections of prophetic traditions.",
-    instructor: "Sheikh Muhammad Al-Bukhari",
-    duration: "14 weeks",
-    level: "Intermediate",
-    category: "Hadith Studies",
-    rating: 4.9,
-    students: 134,
-    lessons: 28,
-    price: "$129",
-    startDate: "2024-04-22",
-    schedule: "Fridays, 8:00 PM",
-    prerequisites: ["Basic Arabic Reading", "Islamic History Basics"],
-    features: ["Manuscript Analysis", "Authentication Techniques", "Research Methods", "Certificate"],
-  },
-  {
-    id: "6",
-    title: "Islamic Parenting and Family Life",
-    description: "Guidance on raising children according to Islamic values and building strong Muslim families.",
-    instructor: "Sister Aisha Mohamed",
-    duration: "6 weeks",
-    level: "Beginner",
-    category: "Family & Parenting",
-    rating: 4.8,
-    students: 203,
-    lessons: 12,
-    price: "Free",
-    startDate: "2024-03-30",
-    schedule: "Saturdays, 10:00 AM",
-    features: ["Practical Tips", "Q&A Sessions", "Parent Support Group", "Resource Library"],
-  }
-];
-
-const categories = [
-  "All",
-  "Quran Studies",
-  "Islamic History",
-  "Arabic Language",
-  "Islamic Finance",
-  "Hadith Studies",
-  "Family & Parenting",
-  "Islamic Law"
-];
+import { toast } from "sonner";
 
 const levels = ["All", "Beginner", "Intermediate", "Advanced"];
 
 export default function Courses() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // State for data
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedLevel, setSelectedLevel] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCourses = coursesData.filter(course => {
-    const matchesCategory = selectedCategory === "All" || course.category === selectedCategory;
+  // Load data
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [coursesResponse, categoriesResponse] = await Promise.all([
+        courseApi.getCourses({ published: true }),
+        courseApi.getCourseCategories()
+      ]);
+
+      setCourses(coursesResponse);
+      
+      // Extract category names
+      const categoryNames = ["All", ...categoriesResponse.map(cat => cat.name)];
+      setCategories(categoryNames);
+      
+    } catch (err: unknown) {
+      console.error('Error loading courses:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleEnrollment = async (courseId: string) => {
+    try {
+      await courseApi.enrollInCourse({
+        course_id: courseId,
+        payment_method: 'free', // Assuming free courses for now
+        payment_reference: undefined
+      });
+      
+      toast.success("Successfully enrolled in course!");
+      
+      // Refresh courses to update enrollment status
+      await loadData();
+    } catch (error: unknown) {
+      console.error('Error enrolling in course:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to enroll in course");
+    }
+  };
+
+  const filteredCourses = courses.filter(course => {
+    const matchesCategory = selectedCategory === "All" || course.category?.name === selectedCategory;
     const matchesLevel = selectedLevel === "All" || course.level === selectedLevel;
     const matchesSearch = searchQuery === "" || 
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.instructor.toLowerCase().includes(searchQuery.toLowerCase());
+      (course.instructor?.full_name && course.instructor.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesLevel && matchesSearch;
   });
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -190,13 +106,26 @@ export default function Courses() {
   };
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Islamic Courses" 
       subtitle="Expand your Islamic knowledge"
       currentPath={location.pathname}
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+              ×
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="relative overflow-hidden bg-gradient-to-r from-primary/20 via-card to-primary/10 rounded-xl p-6 border border-primary/30">
           <div className="flex items-center justify-between">
@@ -212,11 +141,11 @@ export default function Courses() {
                 <div className="flex items-center gap-4 mt-2 text-sm">
                   <span className="flex items-center gap-1 text-primary">
                     <BookOpen size={14} />
-                    {coursesData.length} Courses
+                    {courses.length} Courses
                   </span>
                   <span className="flex items-center gap-1 text-primary">
                     <Users size={14} />
-                    {coursesData.reduce((sum, course) => sum + course.students, 0)} Students
+                    {courses.reduce((sum, course) => sum + (course.current_students || 0), 0)} Students
                   </span>
                 </div>
               </div>
@@ -266,118 +195,122 @@ export default function Courses() {
         </div>
 
         {/* Courses Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredCourses.map((course, index) => (
-            <div 
-              key={course.id}
-              className="bg-card rounded-xl border border-border/30 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Course Header */}
-              <div className="p-6 pb-4">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
-                      {course.category}
-                    </span>
-                    <span className={cn("text-xs px-2 py-1 rounded-md font-medium", getLevelColor(course.level))}>
-                      {course.level}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star size={14} className="text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-medium">{course.rating}</span>
-                  </div>
-                </div>
-
-                <h3 className="font-display text-lg mb-2 hover:text-primary transition-colors cursor-pointer">
-                  {course.title}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                  {course.description}
-                </p>
-
-                <div className="flex items-center gap-2 mb-4">
-                  <User size={14} className="text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{course.instructor}</span>
-                </div>
-
-                {/* Course Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Clock size={14} className="text-primary" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{course.duration}</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Play size={14} className="text-primary" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{course.lessons} lessons</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Users size={14} className="text-primary" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{course.students} students</p>
-                  </div>
-                </div>
-
-                {/* Schedule */}
-                <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-secondary/30">
-                  <Calendar size={14} className="text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Starts {formatDate(course.startDate)}</p>
-                    <p className="text-xs text-muted-foreground">{course.schedule}</p>
-                  </div>
-                </div>
-
-                {/* Features */}
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-1">
-                    {course.features.slice(0, 3).map((feature) => (
-                      <span key={feature} className="text-xs px-2 py-1 rounded-md bg-green-500/20 text-green-400 flex items-center gap-1">
-                        <CheckCircle size={10} />
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Course Footer */}
-              <div className="px-6 pb-6 pt-2 border-t border-border/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-display text-primary">
-                      {course.price}
-                    </span>
-                    {course.price !== "Free" && (
-                      <span className="text-sm text-muted-foreground ml-1">total</span>
-                    )}
-                  </div>
-                  <Button 
-                    className="bg-primary hover:bg-primary/90 gap-2"
-                    onClick={() => navigate(`/courses/${course.id}`)}
-                  >
-                    <BookOpen size={16} />
-                    Enroll Now
-                  </Button>
-                </div>
-              </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading courses...</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredCourses.length > 0 ? (
+              filteredCourses.map((course, index) => (
+                <div 
+                  key={course.id}
+                  className="bg-card rounded-xl border border-border/30 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Course Header */}
+                  <div className="p-6 pb-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
+                          {course.category?.name || 'General'}
+                        </span>
+                        <span className={cn("text-xs px-2 py-1 rounded-md font-medium", getLevelColor(course.level))}>
+                          {course.level}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star size={14} className="text-amber-400 fill-amber-400" />
+                        <span className="text-sm font-medium">{course.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
 
-        {/* No Results */}
-        {filteredCourses.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen size={48} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No courses found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search or filter criteria.
-            </p>
+                    <h3 className="font-display text-lg mb-2 hover:text-primary transition-colors cursor-pointer">
+                      {course.title}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      {course.short_description || course.description}
+                    </p>
+
+                    <div className="flex items-center gap-2 mb-4">
+                      <User size={14} className="text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{course.instructor?.full_name || 'TBA'}</span>
+                    </div>
+
+                    {/* Course Stats */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Clock size={14} className="text-primary" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{course.duration_weeks} weeks</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <BookOpen size={14} className="text-primary" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{course.total_lessons} lessons</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Users size={14} className="text-primary" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{course.current_students} students</span>
+                      </div>
+                    </div>
+
+                    {/* Course Features */}
+                    {course.learning_outcomes && course.learning_outcomes.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium mb-2">What you'll learn:</h4>
+                        <ul className="space-y-1">
+                          {course.learning_outcomes.slice(0, 2).map((outcome: string, idx: number) => (
+                            <li key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <CheckCircle size={12} className="text-green-400" />
+                              {outcome}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Course Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                      <div className="flex items-center gap-2">
+                        {course.start_date && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar size={12} />
+                            <span>{new Date(course.start_date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-primary">
+                          {course.price === 0 ? 'Free' : `$${course.price}`}
+                        </span>
+                        <Button 
+                          size="sm" 
+                          className="bg-primary hover:bg-primary/90"
+                          onClick={() => handleEnrollment(course.id)}
+                        >
+                          <Play size={14} className="mr-1" />
+                          Enroll
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20">
+                <BookOpen size={64} className="mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-display mb-2">No Courses Found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -401,6 +334,6 @@ export default function Courses() {
           </div>
         </div>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

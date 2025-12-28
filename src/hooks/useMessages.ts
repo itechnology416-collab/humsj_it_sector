@@ -1,70 +1,8 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { messagesApi, Message, MessageTemplate, MessageLog, CreateMessageData, CreateTemplateData, MessageStats } from '@/services/messagesApi';
 
-export interface Message {
-  id: string;
-  type: 'announcement' | 'newsletter' | 'reminder' | 'urgent' | 'general';
-  title: string;
-  content: string;
-  recipients: 'all' | 'members' | 'admins' | 'specific' | 'college';
-  recipient_filter?: Record<string, unknown>;
-  status: 'draft' | 'scheduled' | 'sent' | 'failed';
-  priority: 'low' | 'normal' | 'high' | 'urgent';
-  scheduled_for?: string;
-  sent_at?: string;
-  delivery_count: number;
-  open_count: number;
-  click_count: number;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MessageLog {
-  id: string;
-  message_id: string;
-  recipient_email: string;
-  recipient_user_id?: string;
-  status: 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'failed' | 'bounced';
-  sent_at?: string;
-  delivered_at?: string;
-  opened_at?: string;
-  clicked_at?: string;
-  error_message?: string;
-  created_at: string;
-}
-
-export interface MessageTemplate {
-  id: string;
-  name: string;
-  type: Message['type'];
-  subject_template: string;
-  content_template: string;
-  variables?: Record<string, unknown>;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateMessageData {
-  type: Message['type'];
-  title: string;
-  content: string;
-  recipients: Message['recipients'];
-  recipient_filter?: Record<string, unknown>;
-  priority?: Message['priority'];
-  scheduled_for?: string;
-}
-
-export interface CreateTemplateData {
-  name: string;
-  type: MessageTemplate['type'];
-  subject_template: string;
-  content_template: string;
-  variables?: Record<string, unknown>;
-}
+export type { Message, MessageLog, MessageTemplate, CreateMessageData, CreateTemplateData };
 
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -73,7 +11,7 @@ export const useMessages = () => {
   const [error, setError] = useState<Error | null>(null);
   const { user, isAdmin } = useAuth();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -83,38 +21,27 @@ export const useMessages = () => {
         return;
       }
 
-      const { data, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (messagesError) throw messagesError;
-
-      setMessages(data || []);
+      const data = await messagesApi.getMessages();
+      setMessages(data);
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError(err as Error);
-      toast.error('Failed to load messages');
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAdmin]);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       if (!isAdmin) return;
 
-      const { data, error } = await supabase
-        .from('message_templates')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setTemplates(data || []);
+      const data = await messagesApi.getTemplates();
+      setTemplates(data);
     } catch (err) {
       console.error('Error fetching templates:', err);
+      setError(err as Error);
     }
-  };
+  }, [isAdmin]);
 
   const createMessage = async (messageData: CreateMessageData): Promise<Message | null> => {
     try {
@@ -122,71 +49,38 @@ export const useMessages = () => {
         throw new Error('Only admins can create messages');
       }
 
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([{
-          ...messageData,
-          created_by: user.id,
-          status: messageData.scheduled_for ? 'scheduled' : 'draft',
-          priority: messageData.priority || 'normal',
-          delivery_count: 0,
-          open_count: 0,
-          click_count: 0
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const newMessage: Message = data;
+      const newMessage = await messagesApi.createMessage(messageData, user.id);
       setMessages(prev => [newMessage, ...prev]);
-      
-      toast.success(messageData.scheduled_for ? 'Message scheduled successfully!' : 'Message created successfully!');
       return newMessage;
     } catch (err) {
       console.error('Error creating message:', err);
-      toast.error('Failed to create message');
+      setError(err as Error);
       return null;
     }
   };
 
   const updateMessage = async (messageId: string, updates: Partial<CreateMessageData>): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .update(updates)
-        .eq('id', messageId);
-
-      if (error) throw error;
-
+      const updatedMessage = await messagesApi.updateMessage(messageId, updates);
       setMessages(prev => prev.map(message => 
-        message.id === messageId ? { ...message, ...updates } : message
+        message.id === messageId ? updatedMessage : message
       ));
-
-      toast.success('Message updated successfully!');
       return true;
     } catch (err) {
       console.error('Error updating message:', err);
-      toast.error('Failed to update message');
+      setError(err as Error);
       return false;
     }
   };
 
   const deleteMessage = async (messageId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .delete()
-        .eq('id', messageId);
-
-      if (error) throw error;
-
+      await messagesApi.deleteMessage(messageId);
       setMessages(prev => prev.filter(message => message.id !== messageId));
-      toast.success('Message deleted successfully!');
       return true;
     } catch (err) {
       console.error('Error deleting message:', err);
-      toast.error('Failed to delete message');
+      setError(err as Error);
       return false;
     }
   };
@@ -197,91 +91,23 @@ export const useMessages = () => {
         throw new Error('Only admins can send messages');
       }
 
-      // Get message details
-      const message = messages.find(m => m.id === messageId);
-      if (!message) {
-        throw new Error('Message not found');
-      }
-
-      // Get recipient list based on message recipients setting
-      let recipientEmails: string[] = [];
+      await messagesApi.sendMessage(messageId);
       
-      if (message.recipients === 'all') {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('email')
-          .not('email', 'is', null);
-        recipientEmails = profiles?.map(p => p.email) || [];
-      } else if (message.recipients === 'members') {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('email')
-          .not('email', 'is', null);
-        recipientEmails = profiles?.map(p => p.email) || [];
-      } else if (message.recipients === 'admins') {
-        const { data: adminProfiles } = await supabase
-          .from('profiles')
-          .select('email, user_roles!inner(role)')
-          .in('user_roles.role', ['super_admin', 'it_head', 'sys_admin'])
-          .not('email', 'is', null);
-        recipientEmails = adminProfiles?.map(p => p.email) || [];
-      } else if (message.recipients === 'college' && message.recipient_filter?.college) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('college', message.recipient_filter.college)
-          .not('email', 'is', null);
-        recipientEmails = profiles?.map(p => p.email) || [];
-      }
-
-      // Create message logs for tracking
-      const messageLogs = recipientEmails.map(email => ({
-        message_id: messageId,
-        recipient_email: email,
-        status: 'pending' as const
-      }));
-
-      if (messageLogs.length > 0) {
-        const { error: logError } = await supabase
-          .from('message_logs')
-          .insert(messageLogs);
-
-        if (logError) throw logError;
-      }
-
-      // Update message status
-      const { error: updateError } = await supabase
-        .from('messages')
-        .update({ 
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          delivery_count: recipientEmails.length
-        })
-        .eq('id', messageId);
-
-      if (updateError) throw updateError;
-
-      // Update local state
+      // Update local state to reflect sent status
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
           ? { 
               ...msg, 
               status: 'sent' as const,
-              sent_at: new Date().toISOString(),
-              delivery_count: recipientEmails.length
+              sent_at: new Date().toISOString()
             } 
           : msg
       ));
 
-      // Here you would integrate with your email service (SendGrid, AWS SES, etc.)
-      // For now, we'll just simulate the sending process
-      console.log(`Sending message "${message.title}" to ${recipientEmails.length} recipients`);
-
-      toast.success(`Message sent to ${recipientEmails.length} recipients!`);
       return true;
     } catch (err) {
       console.error('Error sending message:', err);
-      toast.error('Failed to send message');
+      setError(err as Error);
       return false;
     }
   };
@@ -292,86 +118,99 @@ export const useMessages = () => {
         throw new Error('Only admins can create templates');
       }
 
-      const { data, error } = await supabase
-        .from('message_templates')
-        .insert([{
-          ...templateData,
-          created_by: user.id
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const newTemplate: MessageTemplate = data;
+      const newTemplate = await messagesApi.createTemplate(templateData, user.id);
       setTemplates(prev => [...prev, newTemplate]);
-      
-      toast.success('Template created successfully!');
       return newTemplate;
     } catch (err) {
       console.error('Error creating template:', err);
-      toast.error('Failed to create template');
+      setError(err as Error);
       return null;
     }
   };
 
   const deleteTemplate = async (templateId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('message_templates')
-        .delete()
-        .eq('id', templateId);
-
-      if (error) throw error;
-
+      await messagesApi.deleteTemplate(templateId);
       setTemplates(prev => prev.filter(template => template.id !== templateId));
-      toast.success('Template deleted successfully!');
       return true;
     } catch (err) {
       console.error('Error deleting template:', err);
-      toast.error('Failed to delete template');
+      setError(err as Error);
       return false;
     }
   };
 
   const getMessageLogs = async (messageId: string): Promise<MessageLog[]> => {
     try {
-      const { data, error } = await supabase
-        .from('message_logs')
-        .select('*')
-        .eq('message_id', messageId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+      return await messagesApi.getMessageLogs(messageId);
     } catch (err) {
       console.error('Error fetching message logs:', err);
+      setError(err as Error);
       return [];
     }
   };
 
-  const getMessageStats = async (messageId: string) => {
+  const getMessageStats = async (messageId: string): Promise<MessageStats | null> => {
     try {
-      const { data, error } = await supabase
-        .from('message_logs')
-        .select('status')
-        .eq('message_id', messageId);
-
-      if (error) throw error;
-
-      const logs = data || [];
-      const stats = {
-        total: logs.length,
-        sent: logs.filter(l => ['sent', 'delivered', 'opened', 'clicked'].includes(l.status)).length,
-        delivered: logs.filter(l => ['delivered', 'opened', 'clicked'].includes(l.status)).length,
-        opened: logs.filter(l => ['opened', 'clicked'].includes(l.status)).length,
-        clicked: logs.filter(l => l.status === 'clicked').length,
-        failed: logs.filter(l => ['failed', 'bounced'].includes(l.status)).length
-      };
-
-      return stats;
+      return await messagesApi.getMessageStats(messageId);
     } catch (err) {
       console.error('Error fetching message stats:', err);
+      setError(err as Error);
+      return null;
+    }
+  };
+
+  // Search and filtering
+  const searchMessages = async (query: string, filters?: {
+    type?: Message['type'];
+    status?: Message['status'];
+    priority?: Message['priority'];
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<Message[]> => {
+    try {
+      return await messagesApi.searchMessages(query, filters);
+    } catch (err) {
+      console.error('Error searching messages:', err);
+      setError(err as Error);
+      return [];
+    }
+  };
+
+  // Bulk operations
+  const bulkDeleteMessages = async (messageIds: string[]): Promise<boolean> => {
+    try {
+      await messagesApi.bulkDeleteMessages(messageIds);
+      setMessages(prev => prev.filter(message => !messageIds.includes(message.id)));
+      return true;
+    } catch (err) {
+      console.error('Error bulk deleting messages:', err);
+      setError(err as Error);
+      return false;
+    }
+  };
+
+  const bulkUpdateMessageStatus = async (messageIds: string[], status: Message['status']): Promise<boolean> => {
+    try {
+      await messagesApi.bulkUpdateMessageStatus(messageIds, status);
+      setMessages(prev => prev.map(message => 
+        messageIds.includes(message.id) ? { ...message, status } : message
+      ));
+      return true;
+    } catch (err) {
+      console.error('Error bulk updating messages:', err);
+      setError(err as Error);
+      return false;
+    }
+  };
+
+  // Analytics
+  const getMessageAnalytics = async (dateFrom?: string, dateTo?: string) => {
+    try {
+      return await messagesApi.getMessageAnalytics(dateFrom, dateTo);
+    } catch (err) {
+      console.error('Error fetching message analytics:', err);
+      setError(err as Error);
       return null;
     }
   };
@@ -381,13 +220,14 @@ export const useMessages = () => {
       fetchMessages();
       fetchTemplates();
     }
-  }, [user, isAdmin]);
+  }, [isAdmin, fetchMessages, fetchTemplates]);
 
   return {
     messages,
     templates,
     loading,
     error,
+    useMockData: false, // Always use real database now
     fetchMessages,
     fetchTemplates,
     createMessage,
@@ -398,6 +238,10 @@ export const useMessages = () => {
     deleteTemplate,
     getMessageLogs,
     getMessageStats,
+    searchMessages,
+    bulkDeleteMessages,
+    bulkUpdateMessageStatus,
+    getMessageAnalytics,
     refetch: fetchMessages
   };
 };

@@ -191,7 +191,7 @@ export const useNews = () => {
 
       setArticles(formattedNews);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching news:', err);
       setError(err.message || 'Failed to fetch news');
       
@@ -274,7 +274,7 @@ export const useNews = () => {
       toast.success(articleData.scheduled_for ? 'Article scheduled successfully!' : 'Article created successfully!');
       return newArticle;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating article:', err);
       toast.error(err.message || 'Failed to create article');
       return null;
@@ -313,7 +313,7 @@ export const useNews = () => {
       toast.success('Article updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating article:', err);
       toast.error(err.message || 'Failed to update article');
       return false;
@@ -343,7 +343,7 @@ export const useNews = () => {
       toast.success('Article deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting article:', err);
       toast.error(err.message || 'Failed to delete article');
       return false;
@@ -393,7 +393,7 @@ export const useNews = () => {
       toast.success('Article published successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error publishing article:', err);
       toast.error(err.message || 'Failed to publish article');
       return false;
@@ -428,7 +428,7 @@ export const useNews = () => {
       toast.success('Article unpublished successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error unpublishing article:', err);
       toast.error(err.message || 'Failed to unpublish article');
       return false;
@@ -468,7 +468,7 @@ export const useNews = () => {
       toast.success(`Article ${newPinnedState ? 'pinned' : 'unpinned'} successfully!`);
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error toggling pin:', err);
       toast.error(err.message || 'Failed to toggle pin');
       return false;
@@ -497,7 +497,7 @@ export const useNews = () => {
         article.id === articleId ? { ...article, views: article.views + 1 } : article
       ));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error tracking view:', err);
     }
   }, [useMockData]);

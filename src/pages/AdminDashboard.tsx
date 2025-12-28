@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAI } from "@/contexts/AIContext";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { adminDashboardApi } from "@/services/adminDashboardApi";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import AdminAIInsights from "@/components/ai/AdminAIInsights";
 import AdminMemberAnalytics from "@/components/ai/AdminMemberAnalytics";
 import SmartRecommendations from "@/components/ai/SmartRecommendations";
@@ -79,10 +79,11 @@ const pendingTasks = [
 
 export default function AdminDashboard() {
   const { user, isAdmin, isLoading } = useAuth();
-  const { toggleAIAssistant, aiInsights } = useAI();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeAITab, setActiveAITab] = useState("insights");
+  const [dashboardData, setDashboardData] = useState<unknown>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -93,7 +94,39 @@ export default function AdminDashboard() {
     }
   }, [user, isAdmin, isLoading, navigate]);
 
-  if (isLoading) {
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (user && isAdmin) {
+        try {
+          setLoading(true);
+          const [stats, alerts, activities] = await Promise.all([
+            adminDashboardApi.getSystemStats(),
+            adminDashboardApi.getSystemAlerts(),
+            adminDashboardApi.getRecentActivities()
+          ]);
+          setDashboardData({ stats, alerts, activities });
+        } catch (error) {
+          console.error('Failed to load dashboard data:', error);
+          toast.error('Failed to load dashboard data');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadDashboardData();
+  }, [user, isAdmin]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/auth");
+    } else if (!isLoading && user && !isAdmin) {
+      toast.error("Access denied. Admin privileges required.");
+      navigate("/dashboard");
+    }
+  }, [user, isAdmin, isLoading, navigate]);
+
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -104,7 +137,7 @@ export default function AdminDashboard() {
   if (!user || !isAdmin) return null;
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Admin Panel" 
       subtitle="System overview and management"
       currentPath={location.pathname}
@@ -526,6 +559,6 @@ export default function AdminDashboard() {
         {/* Islamic Programs Schedule */}
         <IslamicProgramsSchedule className="mt-8" />
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

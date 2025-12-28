@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -115,34 +115,7 @@ export default function AdminMediaManagement() {
   }, [isAdmin, navigate]);
 
   // Load media items
-  useEffect(() => {
-    loadMediaItems();
-  }, []);
-
-  // Filter items based on search and filters
-  useEffect(() => {
-    let filtered = mediaItems;
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
-    }
-
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(item => item.type === selectedType);
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    setFilteredItems(filtered);
-  }, [mediaItems, selectedCategory, selectedType, searchQuery]);
-
-  const loadMediaItems = async () => {
+  const loadMediaItems = useCallback(async () => {
     try {
       // In a real implementation, you would fetch from your database
       // For now, we'll use mock data
@@ -182,7 +155,35 @@ export default function AdminMediaManagement() {
       console.error('Error loading media items:', error);
       toast.error('Failed to load media items');
     }
-  };
+  }, [user?.email]);
+
+  // Load media items
+  useEffect(() => {
+    loadMediaItems();
+  }, [loadMediaItems]);
+
+  // Filter items based on search and filters
+  useEffect(() => {
+    let filtered = mediaItems;
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+
+    if (selectedType !== 'all') {
+      filtered = filtered.filter(item => item.type === selectedType);
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    setFilteredItems(filtered);
+  }, [mediaItems, selectedCategory, selectedType, searchQuery]);
 
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;

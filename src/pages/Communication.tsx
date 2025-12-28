@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Send, 
@@ -12,7 +12,10 @@ import {
   Plus,
   Search,
   Calendar,
-  Trash2
+  Trash2,
+  Filter,
+  Eye,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -24,19 +27,12 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  type: "announcement" | "email" | "sms" | "notification";
-  title: string;
-  content: string;
-  recipients: string;
-  recipientCount: number;
-  sentAt: string;
-  status: "sent" | "scheduled" | "draft" | "failed";
-  sender: string;
-  scheduledFor?: string;
-}
+import { 
+  communicationApi, 
+  type Message, 
+  type CreateMessageData, 
+  type MessageFilters 
+} from "@/services/communicationApi";
 
 export default function CommunicationPage() {
   const navigate = useNavigate();
@@ -55,6 +51,8 @@ export default function CommunicationPage() {
     scheduledFor: ""
   });
   const [isSending, setIsSending] = useState(false);
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const recipientOptions = [
     { value: "all", label: "All Members", count: 234 },
@@ -65,79 +63,41 @@ export default function CommunicationPage() {
     { value: "new_members", label: "New Members", count: 12 }
   ];
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
-      // Mock data - in production, this would fetch from Supabase
-      const mockMessages: Message[] = [
-        {
-          id: "1",
-          type: "announcement",
-          title: "Ramadan Preparation Notice",
-          content: "Assalamu Alaikum, dear members. As we approach the blessed month of Ramadan, we invite all members to join our preparation meeting this Thursday...",
-          recipients: "All Members",
-          recipientCount: 234,
-          sentAt: "2024-02-15T10:30:00",
-          status: "sent",
-          sender: "Media Team"
-        },
-        {
-          id: "2",
-          type: "email",
-          title: "Weekly Halaqa Schedule Update",
-          content: "Dear brothers and sisters, please note that this week's Tafsir halaqa has been moved to Saturday at 4 PM...",
-          recipients: "Active Members",
-          recipientCount: 198,
-          sentAt: "2024-02-14T14:00:00",
-          status: "sent",
-          sender: "Education Sector"
-        },
-        {
-          id: "3",
-          type: "notification",
-          title: "IT Workshop Registration Open",
-          content: "Registration is now open for the Web Development workshop. Limited seats available!",
-          recipients: "IT Interest Group",
-          recipientCount: 45,
-          sentAt: "2024-02-16T09:00:00",
-          status: "scheduled",
-          sender: "Academic Sector",
-          scheduledFor: "2024-02-16T09:00:00"
-        },
-        {
-          id: "4",
-          type: "sms",
-          title: "Friday Prayer Reminder",
-          content: "Reminder: Jumu'ah prayer at 12:30 PM. Topic: Patience in Trials",
-          recipients: "All Members",
-          recipientCount: 234,
-          sentAt: "2024-02-16T08:00:00",
-          status: "scheduled",
-          sender: "System",
-          scheduledFor: "2024-02-16T08:00:00"
-        },
-        {
-          id: "5",
-          type: "announcement",
-          title: "New Member Welcome",
-          content: "Welcome message draft for new members joining this semester...",
-          recipients: "New Members (Feb 2024)",
-          recipientCount: 12,
-          sentAt: "",
-          status: "draft",
-          sender: "Admin"
-        },
-      ];
-      setMessages(mockMessages);
+      setIsLoading(true);
+      
+      const filters: MessageFilters = {};
+      
+      if (selectedType !== "all") {
+        filters.type = selectedType;
+      }
+      
+      if (searchQuery.trim()) {
+        filters.search = searchQuery.trim();
+      }
+
+      const response = await communicationApi.getMessages({
+        page: currentPage,
+        limit: 20,
+        sort_by: 'created_at',
+        sort_order: 'desc',
+        filters
+      });
+
+      setMessages(response.messages);
+      setTotalMessages(response.total);
     } catch (error) {
+      console.error('Error fetching messages:', error);
       toast.error("Failed to load messages");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, selectedType, searchQuery]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   const handleSendMessage = async () => {
     if (!composeForm.title || !composeForm.content) {
@@ -147,45 +107,52 @@ export default function CommunicationPage() {
 
     setIsSending(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       const selectedRecipient = recipientOptions.find(r => r.value === composeForm.recipients);
-      const isScheduled = composeForm.scheduledFor && new Date(composeForm.scheduledFor) > new Date();
       
-      const newMessage: Message = {
-        id: Date.now().toString(),
+      // Prepare message data
+      const messageData: CreateMessageData = {
         type: composeForm.type,
         title: composeForm.title,
         content: composeForm.content,
-        recipients: selectedRecipient?.label || "Unknown",
-        recipientCount: selectedRecipient?.count || 0,
-        sentAt: isScheduled ? "" : new Date().toISOString(),
-        status: isScheduled ? "scheduled" : "sent",
-        sender: profile?.full_name || "Unknown",
-        scheduledFor: composeForm.scheduledFor || undefined
+        recipient_type: composeForm.recipients === 'all' ? 'all' : 'group',
+        recipient_criteria: {
+          group_type: composeForm.recipients,
+          active_only: true,
+          verified_only: true
+        },
+        priority: 'normal',
+        scheduled_for: composeForm.scheduledFor || undefined,
+        tags: [composeForm.type, 'humsj']
       };
 
-      setMessages(prev => [newMessage, ...prev]);
+      // Create the message
+      const newMessage = await communicationApi.createMessage(messageData);
       
-      // Simulate actual sending process
-      if (!isScheduled) {
-        toast.success(`Message sent successfully to ${selectedRecipient?.count} recipients!`);
-      } else {
-        toast.success(`Message scheduled successfully for ${new Date(composeForm.scheduledFor).toLocaleString()}!`);
+      if (newMessage) {
+        // If not scheduled, send immediately
+        if (!composeForm.scheduledFor) {
+          await communicationApi.sendMessage(newMessage.id);
+          toast.success(`Message sent successfully to ${selectedRecipient?.count} recipients!`);
+        } else {
+          toast.success(`Message scheduled successfully for ${new Date(composeForm.scheduledFor).toLocaleString()}!`);
+        }
+        
+        // Refresh messages list
+        await fetchMessages();
+        
+        // Reset form
+        setComposeForm({
+          type: "announcement",
+          title: "",
+          content: "",
+          recipients: "all",
+          scheduledFor: ""
+        });
+        setIsComposeOpen(false);
       }
-      
-      // Reset form
-      setComposeForm({
-        type: "announcement",
-        title: "",
-        content: "",
-        recipients: "all",
-        scheduledFor: ""
-      });
-      setIsComposeOpen(false);
-    } catch (error) {
-      toast.error("Failed to send message");
+    } catch (error: unknown) {
+      console.error('Error sending message:', error);
+      toast.error(error.message || "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -193,10 +160,14 @@ export default function CommunicationPage() {
 
   const handleDeleteMessage = async (id: string) => {
     try {
-      setMessages(prev => prev.filter(msg => msg.id !== id));
-      toast.success("Message deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete message");
+      const success = await communicationApi.deleteMessage(id);
+      if (success) {
+        setMessages(prev => prev.filter(msg => msg.id !== id));
+        toast.success("Message deleted successfully");
+      }
+    } catch (error: unknown) {
+      console.error('Error deleting message:', error);
+      toast.error(error.message || "Failed to delete message");
     }
   };
 
@@ -210,7 +181,7 @@ export default function CommunicationPage() {
     sent: messages.filter(m => m.status === "sent").length,
     scheduled: messages.filter(m => m.status === "scheduled").length,
     drafts: messages.filter(m => m.status === "draft").length,
-    totalRecipients: messages.filter(m => m.status === "sent").reduce((acc, m) => acc + m.recipientCount, 0),
+    totalRecipients: messages.filter(m => m.status === "sent").reduce((acc, m) => acc + m.recipient_count, 0),
   };
 
   const typeConfig = {
@@ -524,8 +495,8 @@ function MessageCard({ message, delay, onDelete, typeConfig, statusConfig }: {
   message: Message; 
   delay: number; 
   onDelete: (id: string) => void;
-  typeConfig: any;
-  statusConfig: any;
+  typeConfig: unknown;
+  statusConfig: unknown;
 }) {
   const type = typeConfig[message.type];
   const status = statusConfig[message.status];
@@ -567,22 +538,22 @@ function MessageCard({ message, delay, onDelete, typeConfig, statusConfig }: {
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Users size={14} />
-              {message.recipients} ({message.recipientCount})
+              {message.recipient_count} recipients
             </span>
             <span className="flex items-center gap-1.5">
               <Send size={14} />
-              {message.sender}
+              {message.sender_name || 'System'}
             </span>
-            {message.sentAt && (
+            {message.sent_at && (
               <span className="flex items-center gap-1.5">
                 <Clock size={14} />
-                {new Date(message.sentAt).toLocaleString()}
+                {new Date(message.sent_at).toLocaleString()}
               </span>
             )}
-            {message.scheduledFor && message.status === "scheduled" && (
+            {message.scheduled_for && message.status === "scheduled" && (
               <span className="flex items-center gap-1.5 text-secondary">
                 <Calendar size={14} />
-                Scheduled: {new Date(message.scheduledFor).toLocaleString()}
+                Scheduled: {new Date(message.scheduled_for).toLocaleString()}
               </span>
             )}
           </div>

@@ -406,7 +406,7 @@ export default function PartnershipsPage() {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as unknown)}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-red"
@@ -553,7 +553,7 @@ export default function PartnershipsPage() {
                     </div>
                     <div>
                       <Label htmlFor="organization_type">Organization Type *</Label>
-                      <Select value={applicationForm.organization_type} onValueChange={(value) => setApplicationForm(prev => ({ ...prev, organization_type: value as any }))}>
+                      <Select value={applicationForm.organization_type} onValueChange={(value) => setApplicationForm(prev => ({ ...prev, organization_type: value as unknown }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -625,7 +625,7 @@ export default function PartnershipsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="partnership_type">Partnership Type</Label>
-                      <Select value={applicationForm.partnership_type} onValueChange={(value) => setApplicationForm(prev => ({ ...prev, partnership_type: value as any }))}>
+                      <Select value={applicationForm.partnership_type} onValueChange={(value) => setApplicationForm(prev => ({ ...prev, partnership_type: value as unknown }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>

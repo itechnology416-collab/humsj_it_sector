@@ -147,7 +147,7 @@ export const useCommittees = () => {
 
   const checkTableExists = async (): Promise<boolean> => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committees')
         .select('id')
         .limit(1);
@@ -188,7 +188,7 @@ export const useCommittees = () => {
 
       setUseMockData(false);
 
-      let query = (supabase as any)
+      let query = (supabase as unknown)
         .from('committees')
         .select(`
           *,
@@ -218,7 +218,7 @@ export const useCommittees = () => {
       setCommittees(formattedCommittees);
 
       // Fetch committee members
-      const { data: membersData, error: membersError } = await (supabase as any)
+      const { data: membersData, error: membersError } = await (supabase as unknown)
         .from('committee_members')
         .select(`
           *,
@@ -238,7 +238,7 @@ export const useCommittees = () => {
         setMembers(formattedMembers);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching committee data:', err);
       setError(err.message || 'Failed to fetch committee data');
       
@@ -274,7 +274,7 @@ export const useCommittees = () => {
         return newCommittee;
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase as unknown)
         .from('committees')
         .insert([{
           ...committeeData,
@@ -300,7 +300,7 @@ export const useCommittees = () => {
       toast.success('Committee created successfully!');
       return newCommittee;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating committee:', err);
       toast.error(err.message || 'Failed to create committee');
       return null;
@@ -321,7 +321,7 @@ export const useCommittees = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committees')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', committeeId);
@@ -335,7 +335,7 @@ export const useCommittees = () => {
       toast.success('Committee updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating committee:', err);
       toast.error(err.message || 'Failed to update committee');
       return false;
@@ -355,7 +355,7 @@ export const useCommittees = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committees')
         .delete()
         .eq('id', committeeId);
@@ -367,7 +367,7 @@ export const useCommittees = () => {
       toast.success('Committee deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting committee:', err);
       toast.error(err.message || 'Failed to delete committee');
       return false;
@@ -405,7 +405,7 @@ export const useCommittees = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committee_members')
         .insert([{
           ...memberData,
@@ -424,7 +424,7 @@ export const useCommittees = () => {
       await fetchCommittees(); // Refresh data
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error adding member:', err);
       toast.error(err.message || 'Failed to add member');
       return false;
@@ -454,7 +454,7 @@ export const useCommittees = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committee_members')
         .delete()
         .eq('id', memberId);
@@ -465,7 +465,7 @@ export const useCommittees = () => {
       await fetchCommittees(); // Refresh data
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error removing member:', err);
       toast.error(err.message || 'Failed to remove member');
       return false;
@@ -486,7 +486,7 @@ export const useCommittees = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('committee_members')
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq('id', memberId);
@@ -500,7 +500,7 @@ export const useCommittees = () => {
       toast.success('Member role updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating member role:', err);
       toast.error(err.message || 'Failed to update member role');
       return false;

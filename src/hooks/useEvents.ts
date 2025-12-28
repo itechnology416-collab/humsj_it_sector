@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -118,7 +118,7 @@ export const useEvents = () => {
   const checkTableExists = async (): Promise<boolean> => {
     try {
       // Try to query the events table to see if it exists
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('events')
         .select('id')
         .limit(1);
@@ -129,7 +129,7 @@ export const useEvents = () => {
     }
   };
 
-  const fetchEvents = async (includeAll = false) => {
+  const fetchEvents = useCallback(async (includeAll = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -147,7 +147,7 @@ export const useEvents = () => {
 
       setUseMockData(false);
 
-      let query = (supabase as any)
+      let query = (supabase as unknown)
         .from('events')
         .select(`
           *,
@@ -168,21 +168,21 @@ export const useEvents = () => {
       // Get user's registrations if logged in
       let userRegistrations: string[] = [];
       if (user) {
-        const { data: registrations, error: regError } = await (supabase as any)
+        const { data: registrations, error: regError } = await (supabase as unknown)
           .from('event_registrations')
           .select('event_id')
           .eq('user_id', user.id);
 
         if (!regError && registrations) {
-          userRegistrations = registrations.map((r: any) => r.event_id);
+          userRegistrations = registrations.map((r: unknown) => r.event_id);
         }
       }
 
       // Format events with registration info
-      const formattedEvents: Event[] = (eventsData || []).map((event: any) => ({
-        ...event,
-        is_registered: userRegistrations.includes(event.id),
-        registration_count: Array.isArray(event.event_registrations) ? event.event_registrations.length : 0
+      const formattedEvents: Event[] = (eventsData || []).map((event: unknown) => ({
+        ...(event as any),
+        is_registered: userRegistrations.includes((event as any).id),
+        registration_count: Array.isArray((event as any).event_registrations) ? (event as any).event_registrations.length : 0
       }));
 
       setEvents(formattedEvents);
@@ -197,7 +197,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isAdmin]);
 
   const createEvent = async (eventData: CreateEventData): Promise<Event | null> => {
     try {
@@ -224,7 +224,7 @@ export const useEvents = () => {
         return newEvent;
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase as unknown)
         .from('events')
         .insert([{
           ...eventData,
@@ -264,7 +264,7 @@ export const useEvents = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('events')
         .update(updates)
         .eq('id', eventId);
@@ -293,7 +293,7 @@ export const useEvents = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('events')
         .delete()
         .eq('id', eventId);
@@ -345,7 +345,7 @@ export const useEvents = () => {
         return false;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('event_registrations')
         .insert([{
           event_id: eventId,
@@ -402,7 +402,7 @@ export const useEvents = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('event_registrations')
         .delete()
         .eq('event_id', eventId)
@@ -441,7 +441,7 @@ export const useEvents = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('event_registrations')
         .update({ 
           attended,
@@ -476,7 +476,7 @@ export const useEvents = () => {
         ];
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase as unknown)
         .from('event_registrations')
         .select(`
           *,
@@ -495,7 +495,7 @@ export const useEvents = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [user, isAdmin]);
+  }, [fetchEvents]);
 
   return {
     events,

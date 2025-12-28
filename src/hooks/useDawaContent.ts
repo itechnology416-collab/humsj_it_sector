@@ -218,7 +218,7 @@ export const useDawaContent = () => {
 
       setContent(formattedContent);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching dawa content:', err);
       setError(err.message || 'Failed to fetch dawa content');
       
@@ -336,7 +336,7 @@ export const useDawaContent = () => {
       toast.success(contentData.scheduled_for ? 'Content scheduled successfully!' : 'Content submitted for review!');
       return newContent;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating dawa content:', err);
       toast.error(err.message || 'Failed to create content');
       return null;
@@ -367,7 +367,7 @@ export const useDawaContent = () => {
       toast.success('Content updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating content:', err);
       toast.error(err.message || 'Failed to update content');
       return false;
@@ -410,7 +410,7 @@ export const useDawaContent = () => {
       toast.success('Content deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting content:', err);
       toast.error(err.message || 'Failed to delete content');
       return false;
@@ -466,7 +466,7 @@ export const useDawaContent = () => {
       toast.success('Content approved and published!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error approving content:', err);
       toast.error(err.message || 'Failed to approve content');
       return false;
@@ -506,7 +506,7 @@ export const useDawaContent = () => {
       toast.success('Content rejected');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error rejecting content:', err);
       toast.error(err.message || 'Failed to reject content');
       return false;
@@ -537,7 +537,7 @@ export const useDawaContent = () => {
         item.id === contentId ? { ...item, views: item.views + 1 } : item
       ));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error tracking view:', err);
     }
   }, [useMockData]);

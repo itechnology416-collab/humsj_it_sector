@@ -342,11 +342,13 @@ export default function UniverseBackground({ variant = 'index' }: UniverseBackgr
 
     // Cleanup
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      const container = containerRef.current;
+      const stars = starsRef.current;
+      if (container) {
+        container.innerHTML = '';
       }
-      if (starsRef.current) {
-        starsRef.current.innerHTML = '';
+      if (stars) {
+        stars.innerHTML = '';
       }
     };
   }, [variant]);

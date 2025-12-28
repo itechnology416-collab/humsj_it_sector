@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { islamicEducationApi } from "@/services/islamicEducationApi";
 import { 
   BookOpen, 
   Calendar, 

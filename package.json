@@ -35,7 +35,11 @@
     "clean": "rm -rf dist node_modules/.vite",
     "postbuild": "echo \"Build completed successfully\"",
     "deploy:staging": "npm run build:staging && echo \"Deploy to staging\"",
-    "deploy:production": "npm run build:production && echo \"Deploy to production\""
+    "deploy:production": "npm run build:production && echo \"Deploy to production\"",
+    "deploy:vercel": "npm run build:production && vercel --prod",
+    "deploy:netlify": "npm run build:production && netlify deploy --prod --dir=dist",
+    "deploy:both": "npm run build:production && node deploy-both.js",
+    "deploy:multi": "npm run deploy:both"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

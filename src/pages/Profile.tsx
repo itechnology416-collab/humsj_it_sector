@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -71,9 +71,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
-  }, [id]);
+  }, [id, fetchProfile]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const targetUserId = id || user?.id;
@@ -112,7 +112,7 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id, user?.id]);
 
   const handleSave = async () => {
     if (!profile) return;
@@ -148,7 +148,7 @@ export default function ProfilePage() {
     return (
       <PageLayout 
         title="Profile" 
-        subtitle="Member profile"
+        subtitle="Loading profile..."
         currentPath={location.pathname}
         onNavigate={navigate}
       >

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { roleManagementApi, type Role, type Permission } from "@/services/roleManagementApi";
 import { 
   Shield, 
   Users, 
@@ -16,112 +17,93 @@ import {
   UserCheck,
   AlertTriangle,
   Search,
-  Filter
+  Filter,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  userCount: number;
-  isSystem: boolean;
-  createdAt: string;
-}
-
-interface Permission {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-}
-
-const mockRoles: Role[] = [
-  {
-    id: "1",
-    name: "Admin",
-    description: "Full system access and control",
-    permissions: ["all"],
-    userCount: 3,
-    isSystem: true,
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "2", 
-    name: "Amir",
-    description: "Leadership and organizational oversight",
-    permissions: ["user_management", "event_management", "content_approval", "financial_oversight"],
-    userCount: 2,
-    isSystem: true,
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "3",
-    name: "IT Coordinator",
-    description: "Technical system management",
-    permissions: ["system_monitoring", "backup_management", "user_support", "content_management"],
-    userCount: 4,
-    isSystem: true,
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "4",
-    name: "Da'wa Coordinator",
-    description: "Islamic outreach and education management",
-    permissions: ["content_management", "event_management", "library_management", "volunteer_coordination"],
-    userCount: 6,
-    isSystem: true,
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "5",
-    name: "Member",
-    description: "Standard community member access",
-    permissions: ["basic_access", "event_participation", "resource_access"],
-    userCount: 385,
-    isSystem: true,
-    createdAt: "2024-01-01"
-  }
-];
-
-const mockPermissions: Permission[] = [
-  { id: "1", name: "User Management", category: "Administration", description: "Create, edit, and manage user accounts" },
-  { id: "2", name: "Role Assignment", category: "Administration", description: "Assign and modify user roles" },
-  { id: "3", name: "System Settings", category: "Administration", description: "Configure system-wide settings" },
-  { id: "4", name: "Event Management", category: "Events", description: "Create and manage community events" },
-  { id: "5", name: "Event Approval", category: "Events", description: "Approve user-submitted events" },
-  { id: "6", name: "Content Management", category: "Content", description: "Manage website content and pages" },
-  { id: "7", name: "Content Approval", category: "Content", description: "Review and approve user content" },
-  { id: "8", name: "Library Management", category: "Content", description: "Manage Islamic knowledge library" },
-  { id: "9", name: "Financial Oversight", category: "Finance", description: "View and manage financial records" },
-  { id: "10", name: "Donation Management", category: "Finance", description: "Handle donation processing" },
-  { id: "11", name: "Volunteer Coordination", category: "Community", description: "Manage volunteer activities" },
-  { id: "12", name: "System Monitoring", category: "Technical", description: "Monitor system health and performance" },
-  { id: "13", name: "Backup Management", category: "Technical", description: "Manage system backups and recovery" },
-  { id: "14", name: "User Support", category: "Technical", description: "Provide technical support to users" }
-];
-
 export default function RoleManagement() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [roles, setRoles] = useState<Role[]>(mockRoles);
-  const [permissions] = useState<Permission[]>(mockPermissions);
+  
+  // API state
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
-    } else if (!isLoading && user && !isAdmin) {
+    } else if (!authLoading && user && !isAdmin) {
       toast.error("Access denied. Admin privileges required.");
       navigate("/dashboard");
     }
-  }, [user, isAdmin, isLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      loadData();
+    }
+  }, [user, isAdmin]);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Load roles and permissions
+      const [rolesData, permissionsData] = await Promise.all([
+        roleManagementApi.getRoles(),
+        roleManagementApi.getPermissions()
+      ]);
+
+      setRoles(rolesData);
+      setPermissions(permissionsData);
+
+    } catch (err: unknown) {
+      console.error('Error loading role data:', err);
+      setError(err.message || 'Failed to load role data');
+      toast.error('Failed to load role data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+
+    if (role.is_system) {
+      toast.error('Cannot delete system roles');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the role "${role.name}"?`)) return;
+
+    try {
+      await roleManagementApi.deleteRole(roleId);
+      toast.success('Role deleted successfully');
+      await loadData(); // Refresh data
+      
+      // Clear selection if deleted role was selected
+      if (selectedRole?.id === roleId) {
+        setSelectedRole(null);
+      }
+    } catch (error: unknown) {
+      console.error('Error deleting role:', error);
+      toast.error(error.message || 'Failed to delete role');
+    }
+  };
 
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,10 +131,13 @@ export default function RoleManagement() {
     return categories;
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading roles and permissions...</p>
+        </div>
       </div>
     );
   }
@@ -167,6 +152,17 @@ export default function RoleManagement() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>×</Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex items-center gap-4">
@@ -180,6 +176,15 @@ export default function RoleManagement() {
           </div>
           
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={loadData}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+              Refresh
+            </Button>
             <Button
               variant="outline"
               onClick={() => navigate("/user-management")}
@@ -237,14 +242,14 @@ export default function RoleManagement() {
                         <div className="flex items-start gap-4">
                           <div className={cn(
                             "w-12 h-12 rounded-lg flex items-center justify-center",
-                            role.isSystem ? "bg-primary/20" : "bg-secondary"
+                            role.is_system ? "bg-primary/20" : "bg-secondary"
                           )}>
-                            <RoleIcon size={20} className={role.isSystem ? "text-primary" : "text-muted-foreground"} />
+                            <RoleIcon size={20} className={role.is_system ? "text-primary" : "text-muted-foreground"} />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-medium">{role.name}</h4>
-                              {role.isSystem && (
+                              {role.is_system && (
                                 <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary">
                                   System
                                 </span>
@@ -254,11 +259,11 @@ export default function RoleManagement() {
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Users size={12} />
-                                {role.userCount} users
+                                {role.user_count || 0} users
                               </span>
                               <span className="flex items-center gap-1">
                                 <Key size={12} />
-                                {role.permissions.length} permissions
+                                {role.permissions?.length || 0} permissions
                               </span>
                             </div>
                           </div>
@@ -268,8 +273,16 @@ export default function RoleManagement() {
                             <Edit size={14} />
                             Edit
                           </Button>
-                          {!role.isSystem && (
-                            <Button size="sm" variant="outline" className="gap-1 text-red-400 hover:text-red-300">
+                          {!role.is_system && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="gap-1 text-red-400 hover:text-red-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteRole(role.id);
+                              }}
+                            >
                               <Trash2 size={14} />
                               Delete
                             </Button>
@@ -295,7 +308,7 @@ export default function RoleManagement() {
                       </div>
                       <div>
                         <h3 className="font-display text-lg">{selectedRole.name}</h3>
-                        <p className="text-sm text-muted-foreground">{selectedRole.userCount} users assigned</p>
+                        <p className="text-sm text-muted-foreground">{selectedRole.user_count || 0} users assigned</p>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{selectedRole.description}</p>
@@ -313,7 +326,7 @@ export default function RoleManagement() {
                           <div className="space-y-2">
                             {categoryPermissions.map((permission) => (
                               <div key={permission.id} className="flex items-center gap-2">
-                                {selectedRole.permissions.includes('all') || selectedRole.permissions.includes(permission.name.toLowerCase().replace(' ', '_')) ? (
+                                {selectedRole.permissions?.some(p => p.id === permission.id) ? (
                                   <Check size={14} className="text-green-400" />
                                 ) : (
                                   <X size={14} className="text-muted-foreground" />
@@ -344,8 +357,8 @@ export default function RoleManagement() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Total Roles", value: roles.length.toString(), icon: Shield, color: "text-primary" },
-            { label: "System Roles", value: roles.filter(r => r.isSystem).length.toString(), icon: Crown, color: "text-amber-400" },
-            { label: "Custom Roles", value: roles.filter(r => !r.isSystem).length.toString(), icon: Users, color: "text-blue-400" },
+            { label: "System Roles", value: roles.filter(r => r.is_system).length.toString(), icon: Crown, color: "text-amber-400" },
+            { label: "Custom Roles", value: roles.filter(r => !r.is_system).length.toString(), icon: Users, color: "text-blue-400" },
             { label: "Total Permissions", value: permissions.length.toString(), icon: Key, color: "text-green-400" }
           ].map((stat, index) => (
             <div 

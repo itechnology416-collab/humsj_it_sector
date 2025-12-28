@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +18,11 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface IslamicFeature {
   id: string;
@@ -27,10 +30,11 @@ interface IslamicFeature {
   description: string;
   icon: React.ComponentType<{ size?: number | string; className?: string }>;
   path: string;
-  category: 'worship' | 'learning' | 'community' | 'tools';
+  category: 'worship' | 'learning' | 'community' | 'tools' | 'education';
   isNew?: boolean;
   color: string;
   bgColor: string;
+  requiresAuth?: boolean;
 }
 
 const ISLAMIC_FEATURES: IslamicFeature[] = [
@@ -55,6 +59,18 @@ const ISLAMIC_FEATURES: IslamicFeature[] = [
     isNew: true,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/20'
+  },
+  {
+    id: 'islamic-course-enrollment',
+    title: 'Islamic Course Enrollment',
+    description: 'Enroll in comprehensive Islamic courses covering Quran, Hadith, Fiqh, Arabic, and more. Authenticated access only.',
+    icon: GraduationCap,
+    path: '/islamic-course-enrollment',
+    category: 'education',
+    isNew: true,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/20',
+    requiresAuth: true
   },
   {
     id: 'dhikr-counter',
@@ -136,6 +152,7 @@ const CATEGORIES = [
   { id: 'all', name: 'All Features', count: ISLAMIC_FEATURES.length },
   { id: 'worship', name: 'Worship & Prayer', count: ISLAMIC_FEATURES.filter(f => f.category === 'worship').length },
   { id: 'learning', name: 'Learning & Education', count: ISLAMIC_FEATURES.filter(f => f.category === 'learning').length },
+  { id: 'education', name: 'Course Enrollment', count: ISLAMIC_FEATURES.filter(f => f.category === 'education').length },
   { id: 'community', name: 'Community & Social', count: ISLAMIC_FEATURES.filter(f => f.category === 'community').length },
   { id: 'tools', name: 'Islamic Tools', count: ISLAMIC_FEATURES.filter(f => f.category === 'tools').length }
 ];
@@ -143,11 +160,21 @@ const CATEGORIES = [
 export default function IslamicFeaturesShowcase() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const newFeaturesCount = ISLAMIC_FEATURES.filter(f => f.isNew).length;
 
+  const handleFeatureClick = (feature: IslamicFeature) => {
+    if (feature.requiresAuth && !user) {
+      toast.error("Please login to access this feature");
+      navigate("/auth");
+      return;
+    }
+    navigate(feature.path);
+  };
+
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Islamic Features" 
       subtitle="Comprehensive Islamic tools and resources for your spiritual journey"
       currentPath={location.pathname}
@@ -220,7 +247,7 @@ export default function IslamicFeaturesShowcase() {
                     key={feature.id}
                     className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer animate-slide-up border-primary/20"
                     style={{ animationDelay: `${index * 150}ms` }}
-                    onClick={() => navigate(feature.path)}
+                    onClick={() => handleFeatureClick(feature)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -284,7 +311,7 @@ export default function IslamicFeaturesShowcase() {
                       <Card 
                         key={feature.id}
                         className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                        onClick={() => navigate(feature.path)}
+                        onClick={() => handleFeatureClick(feature)}
                       >
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
@@ -353,6 +380,6 @@ export default function IslamicFeaturesShowcase() {
           </CardContent>
         </Card>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

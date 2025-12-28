@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -388,7 +388,7 @@ export default function DiscussionForum() {
   );
 }
 
-function TopicCard({ topic }: { topic: any }) {
+function TopicCard({ topic }: { topic: unknown }) {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin": return "text-red-400";

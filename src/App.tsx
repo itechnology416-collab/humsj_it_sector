@@ -77,7 +77,7 @@ import DigitalDawaManagement from "./pages/DigitalDawaManagement";
 import CommitteeManagement from "./pages/CommitteeManagement";
 import VolunteerManagement from "./pages/VolunteerManagement";
 import Khutbah from "./pages/Khutbah";
-import IslamicResources from "./pages/IslamicResources";
+import IslamicResourcesHubPage from "./pages/IslamicResourcesHubPage";
 import DuaCollection from "./pages/DuaCollection";
 import IslamicCalendar from "./pages/IslamicCalendar";
 import IslamicNames from "./pages/IslamicNames";
@@ -112,6 +112,33 @@ import HijriCalendarPage from "./pages/HijriCalendarPage";
 import IslamicNotificationsPage from "./pages/IslamicNotificationsPage";
 import HalalMarketplacePage from "./pages/HalalMarketplacePage";
 import IslamicFeaturesShowcase from "./pages/IslamicFeaturesShowcase";
+import IslamicCourseEnrollment from "./pages/IslamicCourseEnrollment";
+import TafsirPage from "./pages/TafsirPage";
+import TajweedLessons from "./pages/TajweedLessons";
+import IslamicSupplications from "./pages/IslamicSupplications";
+import NamesOfAllah from "./pages/NamesOfAllah";
+import IslamicMeditation from "./pages/IslamicMeditation";
+import FastingTracker from "./pages/FastingTracker";
+import CommunityForum from "./pages/CommunityForum";
+import IslamicMarriage from "./pages/IslamicMarriage";
+import IslamicChildcare from "./pages/IslamicChildcare";
+import ElderCare from "./pages/ElderCare";
+import CommunitySupport from "./pages/CommunitySupport";
+import IslamicPodcasts from "./pages/IslamicPodcasts";
+import IslamicVideos from "./pages/IslamicVideos";
+import IslamicBooks from "./pages/IslamicBooks";
+import IslamicMusic from "./pages/IslamicMusic";
+import IslamicDocumentaries from "./pages/IslamicDocumentaries";
+import LiveStreaming from "./pages/LiveStreaming";
+import UserVerification from "./pages/UserVerification";
+import ThirdPartyIntegrations from "./pages/ThirdPartyIntegrations";
+import APIManagement from "./pages/APIManagement";
+import WebhookManager from "./pages/WebhookManager";
+import DataExport from "./pages/DataExport";
+import IslamicAITutor from "./pages/IslamicAITutor";
+import VirtualMosque from "./pages/VirtualMosque";
+import MyAttendance from "./pages/MyAttendance";
+import EmailVerification from "./pages/EmailVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -170,6 +197,7 @@ const App = () => {
                 <Route path="/information-channels" element={<InformationChannels />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/attendance" element={<Attendance />} />
+                <Route path="/my-attendance" element={<MyAttendance />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/feedback" element={<Feedback />} />
                 <Route path="/achievements" element={<Achievements />} />
@@ -199,7 +227,7 @@ const App = () => {
                 <Route path="/admin-user-approval" element={<AdminUserApproval />} />
                 <Route path="/admin-media" element={<AdminMediaManagement />} />
                 <Route path="/khutbah" element={<Khutbah />} />
-                <Route path="/islamic-resources" element={<IslamicResources />} />
+                <Route path="/islamic-resources" element={<IslamicResourcesHubPage />} />
                 <Route path="/dua-collection" element={<DuaCollection />} />
                 <Route path="/islamic-calendar" element={<IslamicCalendar />} />
                 <Route path="/islamic-names" element={<IslamicNames />} />
@@ -232,6 +260,32 @@ const App = () => {
                 <Route path="/islamic-notifications" element={<IslamicNotificationsPage />} />
                 <Route path="/halal-marketplace" element={<HalalMarketplacePage />} />
                 <Route path="/islamic-features" element={<IslamicFeaturesShowcase />} />
+                <Route path="/islamic-course-enrollment" element={<IslamicCourseEnrollment />} />
+                <Route path="/tafsir" element={<TafsirPage />} />
+                <Route path="/tajweed-lessons" element={<TajweedLessons />} />
+                <Route path="/islamic-supplications" element={<IslamicSupplications />} />
+                <Route path="/names-of-allah" element={<NamesOfAllah />} />
+                <Route path="/islamic-meditation" element={<IslamicMeditation />} />
+                <Route path="/fasting-tracker" element={<FastingTracker />} />
+                <Route path="/community-forum" element={<CommunityForum />} />
+                <Route path="/islamic-marriage" element={<IslamicMarriage />} />
+                <Route path="/islamic-childcare" element={<IslamicChildcare />} />
+                <Route path="/elder-care" element={<ElderCare />} />
+                <Route path="/community-support" element={<CommunitySupport />} />
+                <Route path="/islamic-podcasts" element={<IslamicPodcasts />} />
+                <Route path="/islamic-videos" element={<IslamicVideos />} />
+                <Route path="/islamic-books" element={<IslamicBooks />} />
+                <Route path="/islamic-music" element={<IslamicMusic />} />
+                <Route path="/islamic-documentaries" element={<IslamicDocumentaries />} />
+                <Route path="/live-streaming" element={<LiveStreaming />} />
+                <Route path="/user-verification" element={<UserVerification />} />
+                <Route path="/third-party-integrations" element={<ThirdPartyIntegrations />} />
+                <Route path="/api-management" element={<APIManagement />} />
+                <Route path="/webhook-manager" element={<WebhookManager />} />
+                <Route path="/data-export" element={<DataExport />} />
+                <Route path="/islamic-ai-tutor" element={<IslamicAITutor />} />
+                <Route path="/virtual-mosque" element={<VirtualMosque />} />
+                <Route path="/verify-email" element={<EmailVerification />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AIProvider>

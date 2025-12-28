@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { zakatCalculatorApi } from "@/services/zakatCalculatorApi";
 import { 
   Calculator, 
   DollarSign, 
@@ -125,11 +126,7 @@ export default function ZakatCalculator() {
 
   const currentCategory = zakatCategories.find(cat => cat.id === selectedCategory);
 
-  useEffect(() => {
-    calculateZakat();
-  }, [wealthInputs]);
-
-  const calculateZakat = () => {
+  const calculateZakat = useCallback(() => {
     const newCalculations: ZakatCalculation[] = [];
     let total = 0;
 
@@ -152,7 +149,11 @@ export default function ZakatCalculator() {
     setCalculations(newCalculations);
     setTotalZakat(total);
     setShowResults(Object.values(wealthInputs).some(value => value > 0));
-  };
+  }, [wealthInputs]);
+
+  useEffect(() => {
+    calculateZakat();
+  }, [calculateZakat]);
 
   const handleInputChange = (categoryId: string, value: string) => {
     const numValue = parseFloat(value) || 0;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { halalMarketplaceApi } from '@/services/halalMarketplaceApi';
 import { 
   Store, 
   MapPin, 

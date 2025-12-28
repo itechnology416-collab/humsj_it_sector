@@ -228,7 +228,7 @@ export const useVolunteers = () => {
         }
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching volunteer data:', err);
       setError(err.message || 'Failed to fetch volunteer data');
       
@@ -290,7 +290,7 @@ export const useVolunteers = () => {
       toast.success('Volunteer task created successfully!');
       return data;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating volunteer task:', err);
       toast.error(err.message || 'Failed to create volunteer task');
       return null;
@@ -325,7 +325,7 @@ export const useVolunteers = () => {
       toast.success('Task updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating task:', err);
       toast.error(err.message || 'Failed to update task');
       return false;
@@ -355,7 +355,7 @@ export const useVolunteers = () => {
       toast.success('Task deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting task:', err);
       toast.error(err.message || 'Failed to delete task');
       return false;
@@ -417,7 +417,7 @@ export const useVolunteers = () => {
       await fetchTasks(); // Refresh data
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error applying for task:', err);
       toast.error(err.message || 'Failed to submit application');
       return false;
@@ -460,7 +460,7 @@ export const useVolunteers = () => {
       toast.success('Application approved!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error approving application:', err);
       toast.error(err.message || 'Failed to approve application');
       return false;
@@ -502,7 +502,7 @@ export const useVolunteers = () => {
       toast.success('Application rejected');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error rejecting application:', err);
       toast.error(err.message || 'Failed to reject application');
       return false;
@@ -539,7 +539,7 @@ export const useVolunteers = () => {
       toast.success('Hours logged successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error logging hours:', err);
       toast.error(err.message || 'Failed to log hours');
       return false;

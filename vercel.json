@@ -1,15 +1,6 @@
 {
   "version": 2,
   "name": "humsj-it-sector",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
   "routes": [
     {
       "handle": "filesystem"
@@ -53,15 +44,5 @@
   ],
   "env": {
     "VITE_APP_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "VITE_APP_ENV": "production"
-    }
-  },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "@vercel/node"
-    }
   }
 }

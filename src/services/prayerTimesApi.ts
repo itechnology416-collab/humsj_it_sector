@@ -160,7 +160,7 @@ export class PrayerTimesService {
         throw new Error(`Prayer times calendar API error: ${data.status}`);
       }
 
-      return data.data.map((day: any) => ({
+      return data.data.map((day: unknown) => ({
         fajr: this.formatTime(day.timings.Fajr),
         sunrise: this.formatTime(day.timings.Sunrise),
         dhuhr: this.formatTime(day.timings.Dhuhr),

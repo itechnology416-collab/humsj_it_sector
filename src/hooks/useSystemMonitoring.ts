@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { systemMonitoringApi } from '@/services/systemMonitoringApi';
 import { toast } from 'sonner';
 
 export interface SystemLog {
@@ -220,7 +221,7 @@ export const useSystemMonitoring = () => {
 
       setLogs(logsData || []);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching system logs:', err);
       setError(err.message || 'Failed to fetch system logs');
       
@@ -285,7 +286,7 @@ export const useSystemMonitoring = () => {
 
       setMetrics(metricsData || []);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching system metrics:', err);
       setMetrics(mockMetrics);
     }
@@ -323,7 +324,7 @@ export const useSystemMonitoring = () => {
       setLogs(prev => [data, ...prev]);
       return data;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating log:', err);
       return null;
     }
@@ -359,7 +360,7 @@ export const useSystemMonitoring = () => {
       toast.success('Metric recorded successfully!');
       return data;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating metric:', err);
       toast.error(err.message || 'Failed to record metric');
       return null;
@@ -395,7 +396,7 @@ export const useSystemMonitoring = () => {
       await fetchLogs(); // Refresh logs
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error clearing logs:', err);
       toast.error(err.message || 'Failed to clear logs');
       return false;

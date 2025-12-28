@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDawaContent } from "@/hooks/useDawaContent";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { dawaManagementApi, type DawaContent, type DawaContentFilters } from "@/services/dawaManagementApi";
 import { 
   Heart, 
   FileText, 
@@ -23,98 +23,13 @@ import {
   Globe,
   Play,
   BookOpen,
-  XCircle
+  XCircle,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-interface DawaContent {
-  id: string;
-  title: string;
-  type: "article" | "video" | "audio" | "infographic";
-  status: "pending" | "approved" | "rejected" | "scheduled";
-  author: string;
-  submittedAt: string;
-  scheduledFor?: string;
-  category: string;
-  language: string;
-  views?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  description: string;
-  tags: string[];
-}
-
-const mockDawaContent: DawaContent[] = [
-  {
-    id: "1",
-    title: "The Five Pillars of Islam - Complete Guide",
-    type: "article",
-    status: "approved",
-    author: "Sheikh Ahmed Al-Mahmoud",
-    submittedAt: "2024-03-15T10:30:00Z",
-    scheduledFor: "2024-03-20T15:00:00Z",
-    category: "Islamic Basics",
-    language: "English",
-    views: 1250,
-    likes: 89,
-    comments: 23,
-    shares: 45,
-    description: "Comprehensive guide explaining the fundamental pillars of Islamic faith and practice.",
-    tags: ["Pillars", "Islam", "Basics", "Faith"]
-  },
-  {
-    id: "2",
-    title: "Beautiful Quran Recitation - Surah Al-Fatiha",
-    type: "audio",
-    status: "pending",
-    author: "Qari Muhammad Hassan",
-    submittedAt: "2024-03-14T14:20:00Z",
-    category: "Quran Recitation",
-    language: "Arabic",
-    description: "Melodious recitation of the opening chapter of the Holy Quran with proper Tajweed.",
-    tags: ["Quran", "Recitation", "Al-Fatiha", "Tajweed"]
-  },
-  {
-    id: "3",
-    title: "Islamic History: The Golden Age",
-    type: "video",
-    status: "scheduled",
-    author: "Dr. Fatima Hassan",
-    submittedAt: "2024-03-13T09:15:00Z",
-    scheduledFor: "2024-03-25T18:00:00Z",
-    category: "Islamic History",
-    language: "English",
-    description: "Documentary exploring the achievements and contributions during Islam's golden age.",
-    tags: ["History", "Golden Age", "Science", "Culture"]
-  },
-  {
-    id: "4",
-    title: "Prayer Times Infographic",
-    type: "infographic",
-    status: "rejected",
-    author: "Design Team",
-    submittedAt: "2024-03-12T16:45:00Z",
-    category: "Prayer",
-    language: "Multilingual",
-    description: "Visual guide showing prayer times and their significance throughout the day.",
-    tags: ["Prayer", "Times", "Visual", "Guide"]
-  },
-  {
-    id: "5",
-    title: "Ramadan Preparation Checklist",
-    type: "article",
-    status: "pending",
-    author: "Community Team",
-    submittedAt: "2024-03-11T11:30:00Z",
-    category: "Ramadan",
-    language: "English",
-    description: "Practical guide to prepare spiritually and physically for the holy month of Ramadan.",
-    tags: ["Ramadan", "Preparation", "Fasting", "Spirituality"]
-  }
-];
 
 const contentTypes = [
   { value: "all", label: "All Types", icon: Globe },
@@ -132,47 +47,125 @@ const statusOptions = [
   { value: "scheduled", label: "Scheduled" }
 ];
 
-const categories = [
-  "All Categories",
-  "Islamic Basics",
-  "Quran Recitation",
-  "Islamic History",
-  "Prayer",
-  "Ramadan",
-  "Hadith",
-  "Fiqh",
-  "Spirituality"
-];
-
 export default function DigitalDawaManagement() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [content, setContent] = useState<DawaContent[]>(mockDawaContent);
+  
+  // API state
+  const [content, setContent] = useState<DawaContent[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalContent, setTotalContent] = useState(0);
+  
+  // Filter state
   const [selectedType, setSelectedType] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
-    } else if (!isLoading && user && !isAdmin) {
+    } else if (!authLoading && user && !isAdmin) {
       toast.error("Access denied. Admin privileges required.");
       navigate("/dashboard");
     }
-  }, [user, isAdmin, isLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate]);
 
-  const filteredContent = content.filter(item => {
-    const matchesType = selectedType === "all" || item.type === selectedType;
-    const matchesStatus = selectedStatus === "all" || item.status === selectedStatus;
-    const matchesCategory = selectedCategory === "All Categories" || item.category === selectedCategory;
-    const matchesSearch = searchQuery === "" || 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesType && matchesStatus && matchesCategory && matchesSearch;
-  });
+  useEffect(() => {
+    if (user && isAdmin) {
+      loadData();
+    }
+  }, [user, isAdmin, selectedType, selectedStatus, selectedCategory, searchQuery, currentPage]);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Build filters
+      const filters: DawaContentFilters = {};
+      
+      if (selectedType !== "all") {
+        filters.content_type = selectedType as unknown;
+      }
+      
+      if (selectedStatus !== "all") {
+        filters.status = selectedStatus as unknown;
+      }
+      
+      if (selectedCategory !== "all") {
+        filters.category = selectedCategory;
+      }
+      
+      if (searchQuery.trim()) {
+        filters.search = searchQuery.trim();
+      }
+
+      // Load content
+      const { content: contentData, total } = await dawaManagementApi.getDawaContent({
+        ...filters,
+        limit: 20,
+        offset: (currentPage - 1) * 20
+      });
+
+      setContent(contentData);
+      setTotalContent(total);
+
+      // Load categories if not loaded
+      if (categories.length === 0) {
+        const categoriesData = await dawaManagementApi.getDawaCategories();
+        setCategories(categoriesData.map(cat => cat.name));
+      }
+
+    } catch (err: unknown) {
+      console.error('Error loading da\'wa content:', err);
+      setError(err.message || 'Failed to load da\'wa content');
+      toast.error('Failed to load da\'wa content');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await dawaManagementApi.updateDawaContentStatus(id, 'approved');
+      toast.success("Content approved successfully");
+      await loadData(); // Refresh data
+    } catch (error: unknown) {
+      console.error('Error approving content:', error);
+      toast.error(error.message || 'Failed to approve content');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await dawaManagementApi.updateDawaContentStatus(id, 'rejected');
+      toast.success("Content rejected");
+      await loadData(); // Refresh data
+    } catch (error: unknown) {
+      console.error('Error rejecting content:', error);
+      toast.error(error.message || 'Failed to reject content');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this content?')) return;
+    
+    try {
+      await dawaManagementApi.deleteDawaContent(id);
+      toast.success("Content deleted successfully");
+      await loadData(); // Refresh data
+    } catch (error: unknown) {
+      console.error('Error deleting content:', error);
+      toast.error(error.message || 'Failed to delete content');
+    }
+  };
+
+  const filteredContent = content; // Already filtered by API
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -204,20 +197,6 @@ export default function DigitalDawaManagement() {
     }
   };
 
-  const handleApprove = (id: string) => {
-    setContent(prev => prev.map(item => 
-      item.id === id ? { ...item, status: "approved" as const } : item
-    ));
-    toast.success("Content approved successfully");
-  };
-
-  const handleReject = (id: string) => {
-    setContent(prev => prev.map(item => 
-      item.id === id ? { ...item, status: "rejected" as const } : item
-    ));
-    toast.success("Content rejected");
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -228,10 +207,13 @@ export default function DigitalDawaManagement() {
     });
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading da'wa content...</p>
+        </div>
       </div>
     );
   }
@@ -246,6 +228,17 @@ export default function DigitalDawaManagement() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>×</Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex items-center gap-4">
@@ -259,6 +252,15 @@ export default function DigitalDawaManagement() {
           </div>
           
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={loadData}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+              Refresh
+            </Button>
             <Button
               variant="outline"
               onClick={() => navigate("/content")}
@@ -315,6 +317,7 @@ export default function DigitalDawaManagement() {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-4 py-3 rounded-xl bg-card border border-border/50 focus:border-primary outline-none"
           >
+            <option value="all">All Categories</option>
             {categories.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
@@ -327,7 +330,7 @@ export default function DigitalDawaManagement() {
             { label: "Pending Review", value: content.filter(c => c.status === 'pending').length.toString(), icon: Clock, color: "text-amber-400" },
             { label: "Approved", value: content.filter(c => c.status === 'approved').length.toString(), icon: CheckCircle, color: "text-green-400" },
             { label: "Scheduled", value: content.filter(c => c.status === 'scheduled').length.toString(), icon: Calendar, color: "text-blue-400" },
-            { label: "Total Views", value: content.reduce((sum, c) => sum + (c.views || 0), 0).toLocaleString(), icon: Eye, color: "text-primary" }
+            { label: "Total Views", value: content.reduce((sum, c) => sum + (c.engagement_stats?.views || 0), 0).toLocaleString(), icon: Eye, color: "text-primary" }
           ].map((stat, index) => (
             <div 
               key={stat.label}
@@ -381,7 +384,7 @@ export default function DigitalDawaManagement() {
                             {item.status}
                           </span>
                           <span className="text-xs px-2 py-1 rounded-md bg-secondary text-foreground">
-                            {item.type}
+                            {item.content_type}
                           </span>
                         </div>
                         
@@ -390,11 +393,11 @@ export default function DigitalDawaManagement() {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                           <span className="flex items-center gap-1">
                             <User size={14} />
-                            {item.author}
+                            {item.author?.full_name || 'Unknown'}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar size={14} />
-                            {formatDate(item.submittedAt)}
+                            {formatDate(item.created_at)}
                           </span>
                           <span className="flex items-center gap-1">
                             <Globe size={14} />
@@ -402,30 +405,30 @@ export default function DigitalDawaManagement() {
                           </span>
                         </div>
 
-                        {item.status === 'approved' && (
+                        {item.status === 'approved' && item.engagement_stats && (
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                            {item.views && (
+                            {item.engagement_stats.views > 0 && (
                               <span className="flex items-center gap-1">
                                 <Eye size={14} />
-                                {item.views} views
+                                {item.engagement_stats.views} views
                               </span>
                             )}
-                            {item.likes && (
+                            {item.engagement_stats.likes > 0 && (
                               <span className="flex items-center gap-1">
                                 <ThumbsUp size={14} />
-                                {item.likes} likes
+                                {item.engagement_stats.likes} likes
                               </span>
                             )}
-                            {item.comments && (
+                            {item.engagement_stats.comments > 0 && (
                               <span className="flex items-center gap-1">
                                 <MessageSquare size={14} />
-                                {item.comments} comments
+                                {item.engagement_stats.comments} comments
                               </span>
                             )}
-                            {item.shares && (
+                            {item.engagement_stats.shares > 0 && (
                               <span className="flex items-center gap-1">
                                 <Share2 size={14} />
-                                {item.shares} shares
+                                {item.engagement_stats.shares} shares
                               </span>
                             )}
                           </div>
@@ -470,6 +473,15 @@ export default function DigitalDawaManagement() {
                       <Button size="sm" variant="outline" className="gap-1">
                         <Edit size={14} />
                         Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDelete(item.id)}
+                        className="text-red-400 hover:text-red-300 gap-1"
+                      >
+                        <XCircle size={14} />
+                        Delete
                       </Button>
                     </div>
                   </div>

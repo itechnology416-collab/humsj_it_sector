@@ -1,7 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
+import {
+  getVolunteerOpportunities,
+  getVolunteerDashboardStats,
+  getUserApplications,
+  getUserVolunteerHours,
+  applyForOpportunity,
+  type VolunteerOpportunity,
+  type VolunteerApplication,
+  type VolunteerHours,
+  type VolunteerFilters
+} from "@/services/volunteerApi";
 import { 
   Heart, 
   Clock, 
@@ -20,134 +31,115 @@ import {
   TrendingUp,
   Eye,
   UserPlus,
-  UserMinus
+  UserMinus,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const availableOpportunities = [
-  {
-    id: 1,
-    title: "IT Support Volunteer",
-    organization: "Academic Sector",
-    description: "Help maintain computer systems and provide technical support to members",
-    category: "Technology",
-    timeCommitment: "4 hours/week",
-    location: "Computer Lab",
-    skills: ["Computer Skills", "Problem Solving", "Communication"],
-    urgency: "high",
-    deadline: "2024-12-30",
-    volunteers: 3,
-    maxVolunteers: 5,
-    status: "available"
-  },
-  {
-    id: 2,
-    title: "Event Photography",
-    organization: "Media Committee",
-    description: "Capture moments during Islamic events and community gatherings",
-    category: "Media",
-    timeCommitment: "2-3 hours/event",
-    location: "Various Locations",
-    skills: ["Photography", "Creativity", "Equipment Handling"],
-    urgency: "medium",
-    deadline: "2024-12-25",
-    volunteers: 2,
-    maxVolunteers: 3,
-    status: "available"
-  },
-  {
-    id: 3,
-    title: "Quran Teaching Assistant",
-    organization: "Education Committee",
-    description: "Assist in teaching Quran recitation to younger members",
-    category: "Education",
-    timeCommitment: "6 hours/week",
-    location: "Study Rooms",
-    skills: ["Quran Recitation", "Teaching", "Patience"],
-    urgency: "high",
-    deadline: "2024-12-28",
-    volunteers: 1,
-    maxVolunteers: 4,
-    status: "available"
-  },
-  {
-    id: 4,
-    title: "Community Outreach Coordinator",
-    organization: "Social Committee",
-    description: "Help organize community service projects and outreach programs",
-    category: "Community Service",
-    timeCommitment: "5 hours/week",
-    location: "Community Center",
-    skills: ["Organization", "Communication", "Leadership"],
-    urgency: "low",
-    deadline: "2025-01-15",
-    volunteers: 4,
-    maxVolunteers: 6,
-    status: "available"
-  }
-];
-
-const myApplications = [
-  {
-    id: 1,
-    opportunityId: 1,
-    title: "IT Support Volunteer",
-    appliedDate: "2024-12-18",
-    status: "pending",
-    message: "Interested in contributing my technical skills to help the community."
-  },
-  {
-    id: 2,
-    opportunityId: 3,
-    title: "Quran Teaching Assistant",
-    appliedDate: "2024-12-15",
-    status: "accepted",
-    message: "Excited to help teach Quran to younger members."
-  },
-  {
-    id: 3,
-    opportunityId: 2,
-    title: "Event Photography",
-    appliedDate: "2024-12-10",
-    status: "rejected",
-    message: "Would love to capture beautiful moments during events."
-  }
-];
-
-const volunteerHistory = [
-  {
-    id: 1,
-    title: "Friday Prayer Setup",
-    organization: "Prayer Committee",
-    duration: "3 months",
-    hoursContributed: 24,
-    completedDate: "2024-11-30",
-    rating: 5,
-    feedback: "Excellent dedication and punctuality"
-  },
-  {
-    id: 2,
-    title: "Ramadan Iftar Helper",
-    organization: "Social Committee",
-    duration: "1 month",
-    hoursContributed: 32,
-    completedDate: "2024-10-15",
-    rating: 4,
-    feedback: "Great teamwork and enthusiasm"
-  }
-];
+import { toast } from "sonner";
 
 export default function VolunteerOpportunities() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // State for data
+  const [opportunities, setOpportunities] = useState<VolunteerOpportunity[]>([]);
+  const [applications, setApplications] = useState<VolunteerApplication[]>([]);
+  const [volunteerHistory, setVolunteerHistory] = useState<VolunteerHours[]>([]);
+  const [stats, setStats] = useState({
+    totalOpportunities: 0,
+    totalApplications: 0,
+    totalHours: 0,
+    averageRating: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [activeTab, setActiveTab] = useState("available");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterUrgency, setFilterUrgency] = useState("all");
+
+  // Load data
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [opportunitiesResponse, dashboardStats] = await Promise.all([
+        getVolunteerOpportunities({}, 1, 50),
+        getVolunteerDashboardStats()
+      ]);
+
+      setOpportunities(opportunitiesResponse.opportunities);
+      
+      if (user) {
+        const [userApplications, userHours] = await Promise.all([
+          getUserApplications(),
+          getUserVolunteerHours()
+        ]);
+        
+        setApplications(userApplications);
+        setVolunteerHistory(userHours);
+        
+        // Calculate user stats
+        const totalHours = userHours.reduce((sum, record) => sum + record.hours_worked, 0);
+        const verifiedHours = userHours.filter(record => record.verified);
+        const averageRating = verifiedHours.length > 0 ? 4.5 : 0; // Mock rating for now
+        
+        setStats({
+          totalOpportunities: opportunitiesResponse.total,
+          totalApplications: userApplications.length,
+          totalHours,
+          averageRating
+        });
+      } else {
+        setStats({
+          totalOpportunities: opportunitiesResponse.total,
+          totalApplications: 0,
+          totalHours: 0,
+          averageRating: 0
+        });
+      }
+    } catch (err: unknown) {
+      console.error('Error loading volunteer data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load volunteer data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [user, loadData]);
+
+  const handleApplyForOpportunity = async (opportunityId: string) => {
+    if (!user) {
+      toast.error("Please log in to apply for opportunities");
+      return;
+    }
+
+    try {
+      await applyForOpportunity(opportunityId, {
+        motivation: "I am interested in contributing to this opportunity.",
+        skills: [],
+        availability: "Flexible"
+      });
+      
+      toast.success("Application submitted successfully!");
+      
+      // Reload applications
+      const userApplications = await getUserApplications();
+      setApplications(userApplications);
+    } catch (error: unknown) {
+      console.error('Error applying for opportunity:', error);
+      toast.error(error.message || "Failed to submit application");
+    }
+  };
 
   const tabs = [
     { id: "available", label: "Available Tasks", icon: Heart },
@@ -182,17 +174,13 @@ export default function VolunteerOpportunities() {
     }
   };
 
-  const filteredOpportunities = availableOpportunities.filter(opp => {
+  const filteredOpportunities = opportunities.filter(opp => {
     const matchesSearch = opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         opp.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          opp.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === "all" || opp.category === filterCategory;
-    const matchesUrgency = filterUrgency === "all" || opp.urgency === filterUrgency;
+    const matchesUrgency = filterUrgency === "all" || opp.priority === filterUrgency;
     return matchesSearch && matchesCategory && matchesUrgency;
   });
-
-  const totalHours = volunteerHistory.reduce((sum, task) => sum + task.hoursContributed, 0);
-  const averageRating = volunteerHistory.reduce((sum, task) => sum + task.rating, 0) / volunteerHistory.length;
 
   return (
     <PageLayout 
@@ -202,30 +190,43 @@ export default function VolunteerOpportunities() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+              ×
+            </Button>
+          </div>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
             { 
               label: "Available Tasks", 
-              value: availableOpportunities.length.toString(), 
+              value: stats.totalOpportunities.toString(), 
               icon: Heart, 
               color: "text-primary" 
             },
             { 
               label: "My Applications", 
-              value: myApplications.length.toString(), 
+              value: stats.totalApplications.toString(), 
               icon: UserPlus, 
               color: "text-blue-400" 
             },
             { 
               label: "Hours Contributed", 
-              value: totalHours.toString(), 
+              value: stats.totalHours.toString(), 
               icon: Clock, 
               color: "text-green-400" 
             },
             { 
               label: "Average Rating", 
-              value: averageRating ? averageRating.toFixed(1) : "0", 
+              value: stats.averageRating ? stats.averageRating.toFixed(1) : "0", 
               icon: Star, 
               color: "text-amber-400" 
             }
@@ -305,214 +306,232 @@ export default function VolunteerOpportunities() {
 
         {/* Content */}
         <div className="space-y-4">
-          {activeTab === "available" && (
-            <div className="space-y-4">
-              {filteredOpportunities.map((opportunity) => (
-                <div 
-                  key={opportunity.id}
-                  className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300"
-                >
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <Heart size={24} className="text-primary" />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-xl font-display tracking-wide mb-2">{opportunity.title}</h3>
-                          <p className="text-muted-foreground text-sm mb-3">{opportunity.description}</p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading volunteer opportunities...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {activeTab === "available" && (
+                <div className="space-y-4">
+                  {filteredOpportunities.length > 0 ? (
+                    filteredOpportunities.map((opportunity) => (
+                      <div 
+                        key={opportunity.id}
+                        className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300"
+                      >
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <Heart size={24} className="text-primary" />
+                          </div>
                           
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                            <span className="flex items-center gap-1">
-                              <Users size={14} />
-                              {opportunity.organization}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock size={14} />
-                              {opportunity.timeCommitment}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MapPin size={14} />
-                              {opportunity.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar size={14} />
-                              Deadline: {new Date(opportunity.deadline).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <div className="flex-1">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
+                              <div>
+                                <h3 className="text-xl font-display tracking-wide mb-2">{opportunity.title}</h3>
+                                <p className="text-muted-foreground text-sm mb-3">{opportunity.description}</p>
+                                
+                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
+                                  <span className="flex items-center gap-1">
+                                    <Clock size={14} />
+                                    {opportunity.time_commitment || 'Flexible'}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <MapPin size={14} />
+                                    {opportunity.location || 'Various Locations'}
+                                  </span>
+                                  {opportunity.application_deadline && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar size={14} />
+                                      Deadline: {new Date(opportunity.application_deadline).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
 
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {opportunity.skills.map((skill, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col gap-2 mt-4 md:mt-0">
-                          <Badge className={cn("text-xs", getUrgencyColor(opportunity.urgency))}>
-                            {opportunity.urgency.toUpperCase()} PRIORITY
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {opportunity.category}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground text-right">
-                            {opportunity.volunteers}/{opportunity.maxVolunteers} volunteers
-                          </div>
-                        </div>
-                      </div>
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {opportunity.skills_required?.map((skill, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {skill}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col gap-2 mt-4 md:mt-0">
+                                <Badge className={cn("text-xs", getUrgencyColor(opportunity.priority))}>
+                                  {opportunity.priority.toUpperCase()} PRIORITY
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {opportunity.category}
+                                </Badge>
+                                {opportunity.max_volunteers && (
+                                  <div className="text-xs text-muted-foreground text-right">
+                                    {opportunity.current_volunteers}/{opportunity.max_volunteers} volunteers
+                                  </div>
+                                )}
+                              </div>
+                            </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Button className="bg-primary hover:bg-primary/90 gap-1">
-                          <UserPlus size={14} />
-                          Apply Now
-                        </Button>
-                        <Button variant="outline" className="border-border/50 hover:border-primary gap-1">
-                          <Eye size={14} />
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === "applications" && (
-            <div className="space-y-4">
-              {myApplications.length > 0 ? (
-                myApplications.map((application) => {
-                  const StatusIcon = getStatusIcon(application.status);
-                  return (
-                    <div 
-                      key={application.id}
-                      className="bg-card rounded-xl p-6 border border-border/30"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                            <StatusIcon size={20} className={getStatusColor(application.status).split(' ')[1]} />
-                          </div>
-                          <div>
-                            <h3 className="font-display text-lg mb-1">{application.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Applied on {new Date(application.appliedDate).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm italic">"{application.message}"</p>
-                          </div>
-                        </div>
-                        <Badge className={cn("text-xs", getStatusColor(application.status))}>
-                          {application.status.toUpperCase()}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="border-border/50 gap-1">
-                          <Eye size={14} />
-                          View Details
-                        </Button>
-                        {application.status === "pending" && (
-                          <Button size="sm" variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10 gap-1">
-                            <UserMinus size={14} />
-                            Withdraw
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-20">
-                  <UserPlus size={64} className="mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-display mb-2">No Applications Yet</h3>
-                  <p className="text-muted-foreground">Start applying for volunteer opportunities to make a difference.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === "history" && (
-            <div className="space-y-4">
-              {volunteerHistory.length > 0 ? (
-                <>
-                  {/* Summary Stats */}
-                  <div className="bg-gradient-to-r from-primary/20 via-card to-primary/10 rounded-xl p-6 border border-primary/30 mb-6">
-                    <h3 className="text-lg font-display mb-4">Volunteer Summary</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <p className="text-3xl font-display text-primary">{volunteerHistory.length}</p>
-                        <p className="text-sm text-muted-foreground">Tasks Completed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-3xl font-display text-primary">{totalHours}</p>
-                        <p className="text-sm text-muted-foreground">Hours Contributed</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <p className="text-3xl font-display text-primary">{averageRating.toFixed(1)}</p>
-                          <Star size={20} className="text-amber-400 fill-amber-400" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">Average Rating</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* History List */}
-                  {volunteerHistory.map((task) => (
-                    <div 
-                      key={task.id}
-                      className="bg-card rounded-xl p-6 border border-border/30"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                            <CheckCircle size={20} className="text-green-400" />
-                          </div>
-                          <div>
-                            <h3 className="font-display text-lg mb-1">{task.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{task.organization}</p>
-                            <div className="flex gap-4 text-sm text-muted-foreground">
-                              <span>Duration: {task.duration}</span>
-                              <span>Hours: {task.hoursContributed}</span>
-                              <span>Completed: {new Date(task.completedDate).toLocaleDateString()}</span>
+                            <div className="flex flex-wrap gap-2">
+                              <Button 
+                                className="bg-primary hover:bg-primary/90 gap-1"
+                                onClick={() => handleApplyForOpportunity(opportunity.id)}
+                                disabled={!user}
+                              >
+                                <UserPlus size={14} />
+                                Apply Now
+                              </Button>
+                              <Button variant="outline" className="border-border/50 hover:border-primary gap-1">
+                                <Eye size={14} />
+                                View Details
+                              </Button>
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 mb-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                size={14} 
-                                className={cn(
-                                  i < task.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground"
-                                )} 
-                              />
-                            ))}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{task.rating}/5 rating</p>
-                        </div>
                       </div>
-                      
-                      {task.feedback && (
-                        <div className="p-3 bg-secondary/30 rounded-lg">
-                          <p className="text-sm italic">"{task.feedback}"</p>
-                        </div>
-                      )}
+                    ))
+                  ) : (
+                    <div className="text-center py-20">
+                      <Heart size={64} className="mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-display mb-2">No Opportunities Found</h3>
+                      <p className="text-muted-foreground">Try adjusting your search or filters.</p>
                     </div>
-                  ))}
-                </>
-              ) : (
-                <div className="text-center py-20">
-                  <Clock size={64} className="mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-display mb-2">No Volunteer History</h3>
-                  <p className="text-muted-foreground">Complete volunteer tasks to build your service history.</p>
+                  )}
                 </div>
               )}
-            </div>
+
+              {activeTab === "applications" && (
+                <div className="space-y-4">
+                  {applications.length > 0 ? (
+                    applications.map((application) => {
+                      const StatusIcon = getStatusIcon(application.status);
+                      return (
+                        <div 
+                          key={application.id}
+                          className="bg-card rounded-xl p-6 border border-border/30"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                                <StatusIcon size={20} className={getStatusColor(application.status).split(' ')[1]} />
+                              </div>
+                              <div>
+                                <h3 className="font-display text-lg mb-1">{application.opportunity?.title || 'Unknown Opportunity'}</h3>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Applied on {new Date(application.applied_at).toLocaleDateString()}
+                                </p>
+                                {application.motivation && (
+                                  <p className="text-sm italic">"{application.motivation}"</p>
+                                )}
+                              </div>
+                            </div>
+                            <Badge className={cn("text-xs", getStatusColor(application.status))}>
+                              {application.status.toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="border-border/50 gap-1">
+                              <Eye size={14} />
+                              View Details
+                            </Button>
+                            {application.status === "pending" && (
+                              <Button size="sm" variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10 gap-1">
+                                <UserMinus size={14} />
+                                Withdraw
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-20">
+                      <UserPlus size={64} className="mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-display mb-2">No Applications Yet</h3>
+                      <p className="text-muted-foreground">Start applying for volunteer opportunities to make a difference.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "history" && (
+                <div className="space-y-4">
+                  {volunteerHistory.length > 0 ? (
+                    <>
+                      {/* Summary Stats */}
+                      <div className="bg-gradient-to-r from-primary/20 via-card to-primary/10 rounded-xl p-6 border border-primary/30 mb-6">
+                        <h3 className="text-lg font-display mb-4">Volunteer Summary</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <p className="text-3xl font-display text-primary">{volunteerHistory.length}</p>
+                            <p className="text-sm text-muted-foreground">Hours Logged</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-3xl font-display text-primary">{stats.totalHours}</p>
+                            <p className="text-sm text-muted-foreground">Total Hours</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <p className="text-3xl font-display text-primary">{stats.averageRating.toFixed(1)}</p>
+                              <Star size={20} className="text-amber-400 fill-amber-400" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">Average Rating</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* History List */}
+                      {volunteerHistory.map((record) => (
+                        <div 
+                          key={record.id}
+                          className="bg-card rounded-xl p-6 border border-border/30"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                <CheckCircle size={20} className="text-green-400" />
+                              </div>
+                              <div>
+                                <h3 className="font-display text-lg mb-1">Volunteer Work</h3>
+                                <p className="text-sm text-muted-foreground mb-2">{record.description || 'Volunteer activity'}</p>
+                                <div className="flex gap-4 text-sm text-muted-foreground">
+                                  <span>Date: {new Date(record.date).toLocaleDateString()}</span>
+                                  <span>Hours: {record.hours_worked}</span>
+                                  <span>Status: {record.verified ? 'Verified' : 'Pending'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {record.verified && (
+                                <Badge className="bg-green-500/20 text-green-600">
+                                  Verified
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {record.notes && (
+                            <div className="p-3 bg-secondary/30 rounded-lg">
+                              <p className="text-sm italic">"{record.notes}"</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="text-center py-20">
+                      <Clock size={64} className="mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-display mb-2">No Volunteer History</h3>
+                      <p className="text-muted-foreground">Complete volunteer tasks to build your service history.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

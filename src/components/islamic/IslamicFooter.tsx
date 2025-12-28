@@ -55,7 +55,7 @@ export default function IslamicFooter({
       }, 15000);
       return () => clearInterval(quoteTimer);
     }
-  }, [showIslamicQuote]);
+  }, [showIslamicQuote, islamicQuotes.length]);
 
   const islamicQuotes = [
     {

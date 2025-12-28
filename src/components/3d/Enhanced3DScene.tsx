@@ -25,8 +25,9 @@ export default function Enhanced3DScene() {
 
     // Cleanup
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      const container = containerRef.current;
+      if (container) {
+        container.innerHTML = '';
       }
     };
   }, []);

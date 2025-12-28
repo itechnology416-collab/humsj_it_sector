@@ -324,7 +324,7 @@ export default function LeadershipPage() {
     },
     social: {
       website: "https://humsj.edu.et",
-      facebook: "facebook.com/humsj",
+      facebook: "https://www.facebook.com/share/1A5JXhpiG6/",
       telegram: "t.me/humsjofficialchannel",
       instagram: "@humsj_official"
     }
@@ -348,7 +348,7 @@ export default function LeadershipPage() {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as unknown)}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-red"

@@ -198,7 +198,7 @@ export const useCourses = () => {
 
   const checkTableExists = async (): Promise<boolean> => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('courses')
         .select('id')
         .limit(1);
@@ -247,7 +247,7 @@ export const useCourses = () => {
 
       setUseMockData(false);
 
-      let query = (supabase as any)
+      let query = (supabase as unknown)
         .from('courses')
         .select(`
           *,
@@ -279,7 +279,7 @@ export const useCourses = () => {
 
       if (coursesError) throw coursesError;
 
-      const formattedCourses: Course[] = (coursesData || []).map((course: any) => ({
+      const formattedCourses: Course[] = (coursesData || []).map((course: unknown) => ({
         ...course,
         instructor_name: course.profiles?.full_name || 'Unknown Instructor'
       }));
@@ -288,7 +288,7 @@ export const useCourses = () => {
 
       // Fetch enrollments if user is logged in
       if (user) {
-        let enrollQuery = (supabase as any)
+        let enrollQuery = (supabase as unknown)
           .from('course_enrollments')
           .select(`
             *,
@@ -298,7 +298,7 @@ export const useCourses = () => {
 
         if (!isAdmin) {
           // Regular users only see their own enrollments
-          const { data: profile } = await (supabase as any)
+          const { data: profile } = await (supabase as unknown)
             .from('profiles')
             .select('id')
             .eq('user_id', user.id)
@@ -312,7 +312,7 @@ export const useCourses = () => {
         const { data: enrollmentsData, error: enrollmentsError } = await enrollQuery;
 
         if (!enrollmentsError && enrollmentsData) {
-          const formattedEnrollments: CourseEnrollment[] = enrollmentsData.map((enrollment: any) => ({
+          const formattedEnrollments: CourseEnrollment[] = enrollmentsData.map((enrollment: unknown) => ({
             ...enrollment,
             course: enrollment.courses,
             student_name: enrollment.profiles?.full_name || 'Unknown Student'
@@ -321,7 +321,7 @@ export const useCourses = () => {
         }
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching courses:', err);
       setError(err.message || 'Failed to fetch courses');
       
@@ -345,7 +345,7 @@ export const useCourses = () => {
       }
 
       // Get user's profile ID
-      const { data: profile } = await (supabase as any)
+      const { data: profile } = await (supabase as unknown)
         .from('profiles')
         .select('id, full_name')
         .eq('user_id', user.id)
@@ -381,7 +381,7 @@ export const useCourses = () => {
         return newCourse;
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase as unknown)
         .from('courses')
         .insert([{
           ...courseData,
@@ -416,7 +416,7 @@ export const useCourses = () => {
       toast.success('Course created successfully!');
       return newCourse;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating course:', err);
       toast.error(err.message || 'Failed to create course');
       return null;
@@ -439,7 +439,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('courses')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', courseId);
@@ -455,7 +455,7 @@ export const useCourses = () => {
       toast.success('Course updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating course:', err);
       toast.error(err.message || 'Failed to update course');
       return false;
@@ -475,7 +475,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('courses')
         .delete()
         .eq('id', courseId);
@@ -487,7 +487,7 @@ export const useCourses = () => {
       toast.success('Course deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting course:', err);
       toast.error(err.message || 'Failed to delete course');
       return false;
@@ -501,7 +501,7 @@ export const useCourses = () => {
       }
 
       // Get user's profile ID
-      const { data: profile } = await (supabase as any)
+      const { data: profile } = await (supabase as unknown)
         .from('profiles')
         .select('id, full_name')
         .eq('user_id', user.id)
@@ -543,7 +543,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('course_enrollments')
         .insert([{
           course_id: courseId,
@@ -563,10 +563,10 @@ export const useCourses = () => {
       }
 
       // Update course student count
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await (supabase as unknown)
         .from('courses')
         .update({
-          current_students: (supabase as any).sql`current_students + 1`
+          current_students: (supabase as unknown).sql`current_students + 1`
         })
         .eq('id', courseId);
 
@@ -578,7 +578,7 @@ export const useCourses = () => {
       await fetchCourses(); // Refresh data
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error enrolling in course:', err);
       toast.error(err.message || 'Failed to enroll in course');
       return false;
@@ -610,7 +610,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('course_enrollments')
         .update({
           lessons_completed: lessonsCompleted,
@@ -643,7 +643,7 @@ export const useCourses = () => {
       }
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating progress:', err);
       toast.error(err.message || 'Failed to update progress');
       return false;
@@ -664,7 +664,7 @@ export const useCourses = () => {
         return true;
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await (supabase as unknown)
         .from('course_enrollments')
         .update({ rating, review })
         .eq('id', enrollmentId);
@@ -678,7 +678,7 @@ export const useCourses = () => {
       toast.success('Rating submitted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error rating course:', err);
       toast.error(err.message || 'Failed to submit rating');
       return false;

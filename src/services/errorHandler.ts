@@ -28,7 +28,7 @@ export interface ErrorReport {
   userId?: string;
   userAgent: string;
   url: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ErrorHandler {
@@ -76,7 +76,7 @@ export class ErrorHandler {
 
     // Handle React error boundaries (if using)
     if (typeof window !== 'undefined') {
-      (window as any).__REACT_ERROR_OVERLAY_GLOBAL_HOOK__ = {
+      (window as unknown).__REACT_ERROR_OVERLAY_GLOBAL_HOOK__ = {
         onBuildError: (error: Error) => {
           this.handleError(error, {
             category: ErrorCategory.UI,
@@ -89,12 +89,12 @@ export class ErrorHandler {
   }
 
   handleError(
-    error: Error | string | any,
+    error: Error | string | unknown,
     options: {
       category?: ErrorCategory;
       severity?: ErrorSeverity;
       userId?: string;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     } = {}
   ): void {
     const errorReport: ErrorReport = {
@@ -128,7 +128,7 @@ export class ErrorHandler {
     }
   }
 
-  private extractErrorMessage(error: any): string {
+  private extractErrorMessage(error: unknown): string {
     if (typeof error === 'string') {
       return error;
     }
@@ -137,14 +137,14 @@ export class ErrorHandler {
       return error.message;
     }
     
-    if (error && typeof error.message === 'string') {
-      return error.message;
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as Record<string, unknown>).message === 'string') {
+      return (error as Record<string, unknown>).message as string;
     }
     
     return 'Unknown error occurred';
   }
 
-  private categorizeError(error: any): ErrorCategory {
+  private categorizeError(error: unknown): ErrorCategory {
     const message = this.extractErrorMessage(error).toLowerCase();
     
     if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
@@ -174,7 +174,7 @@ export class ErrorHandler {
     return ErrorCategory.UNKNOWN;
   }
 
-  private determineSeverity(error: any): ErrorSeverity {
+  private determineSeverity(error: unknown): ErrorSeverity {
     const message = this.extractErrorMessage(error).toLowerCase();
     
     // Critical errors that break core functionality
@@ -279,7 +279,7 @@ export class ErrorHandler {
   }
 
   // Public methods for manual error reporting
-  reportNetworkError(error: any, url: string, method: string): void {
+  reportNetworkError(error: unknown, url: string, method: string): void {
     this.handleError(error, {
       category: ErrorCategory.NETWORK,
       severity: ErrorSeverity.HIGH,
@@ -287,7 +287,7 @@ export class ErrorHandler {
     });
   }
 
-  reportAuthError(error: any, action: string): void {
+  reportAuthError(error: unknown, action: string): void {
     this.handleError(error, {
       category: ErrorCategory.AUTH,
       severity: ErrorSeverity.HIGH,
@@ -295,7 +295,7 @@ export class ErrorHandler {
     });
   }
 
-  reportValidationError(error: any, field: string, value: any): void {
+  reportValidationError(error: unknown, field: string, value: unknown): void {
     this.handleError(error, {
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.MEDIUM,
@@ -303,7 +303,7 @@ export class ErrorHandler {
     });
   }
 
-  reportApiError(error: any, endpoint: string, statusCode?: number): void {
+  reportApiError(error: unknown, endpoint: string, statusCode?: number): void {
     this.handleError(error, {
       category: ErrorCategory.API,
       severity: ErrorSeverity.HIGH,
@@ -369,7 +369,7 @@ export const handleAsyncError = async <T>(
   }
 };
 
-export const withErrorBoundary = <T extends any[], R>(
+export const withErrorBoundary = <T extends unknown[], R>(
   fn: (...args: T) => R,
   errorOptions?: Parameters<typeof errorHandler.handleError>[1]
 ) => {

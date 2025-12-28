@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useNews } from "@/hooks/useNews";
+import { contentApi, type ContentItem } from "@/services/contentApi";
 import { PublicPageLayout } from "@/components/layout/PublicPageLayout";
 import { 
   Newspaper, 
@@ -18,123 +18,89 @@ import {
   AlertCircle,
   CheckCircle,
   Shield,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ParallaxSection, ParallaxContainer } from "@/components/effects/ParallaxContainer";
-
-interface NewsItem {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  author: string;
-  publishedAt: string;
-  category: string;
-  isPinned: boolean;
-  views: number;
-  comments: number;
-  tags: string[];
-  imageUrl?: string;
-}
-
-const newsData: NewsItem[] = [
-  {
-    id: "1",
-    title: "Ramadan 2024 Schedule and Programs Announced",
-    excerpt: "Join us for a blessed month of fasting, prayer, and community gathering. Special programs and iftar arrangements have been organized.",
-    content: "We are pleased to announce our comprehensive Ramadan 2024 program schedule...",
-    author: "Admin Team",
-    publishedAt: "2024-03-15T10:00:00Z",
-    category: "Religious Events",
-    isPinned: true,
-    views: 1250,
-    comments: 45,
-    tags: ["Ramadan", "Prayer", "Community", "Iftar"]
-  },
-  {
-    id: "2",
-    title: "New Islamic Learning Center Opens",
-    excerpt: "Our state-of-the-art learning center is now open with courses for all ages. Registration is now available for spring semester.",
-    content: "After months of preparation, we are excited to announce the opening of our new Islamic Learning Center...",
-    author: "Education Committee",
-    publishedAt: "2024-03-10T14:30:00Z",
-    category: "Education",
-    isPinned: true,
-    views: 890,
-    comments: 23,
-    tags: ["Education", "Learning", "Courses", "Registration"]
-  },
-  {
-    id: "3",
-    title: "Community Volunteer Drive Success",
-    excerpt: "Thanks to our amazing volunteers, we successfully completed our winter charity drive, helping over 200 families in need.",
-    content: "We are grateful to announce the tremendous success of our winter volunteer drive...",
-    author: "Volunteer Coordinator",
-    publishedAt: "2024-03-08T09:15:00Z",
-    category: "Community Service",
-    isPinned: false,
-    views: 567,
-    comments: 18,
-    tags: ["Volunteer", "Charity", "Community", "Success"]
-  },
-  {
-    id: "4",
-    title: "Youth Program Expansion",
-    excerpt: "Exciting new programs for our youth including sports activities, mentorship programs, and leadership development workshops.",
-    content: "We are thrilled to announce the expansion of our youth programs...",
-    author: "Youth Committee",
-    publishedAt: "2024-03-05T16:45:00Z",
-    category: "Youth Programs",
-    isPinned: false,
-    views: 423,
-    comments: 12,
-    tags: ["Youth", "Sports", "Leadership", "Mentorship"]
-  },
-  {
-    id: "5",
-    title: "Technology Upgrade Complete",
-    excerpt: "Our website and mobile app have been upgraded with new features including AI-powered recommendations and enhanced user experience.",
-    content: "We are excited to share that our major technology upgrade has been completed...",
-    author: "IT Department",
-    publishedAt: "2024-03-01T11:20:00Z",
-    category: "Technology",
-    isPinned: false,
-    views: 789,
-    comments: 34,
-    tags: ["Technology", "AI", "Mobile", "Upgrade"]
-  }
-];
-
-const categories = [
-  "All",
-  "Religious Events",
-  "Education",
-  "Community Service",
-  "Youth Programs",
-  "Technology",
-  "Announcements"
-];
+import { toast } from "sonner";
 
 export default function News() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // State for data
+  const [newsItems, setNewsItems] = useState<ContentItem[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [selectedNews, setSelectedNews] = useState<ContentItem | null>(null);
 
-  const filteredNews = newsData.filter(news => {
-    const matchesCategory = selectedCategory === "All" || news.category === selectedCategory;
+  // Load data
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get news content (assuming news content type exists)
+      const [newsResponse, contentTypesResponse] = await Promise.all([
+        contentApi.getContentItems({ 
+          status: 'published',
+          limit: 50 
+        }),
+        contentApi.getContentTypes()
+      ]);
+
+      // Filter for news-type content
+      const newsContent = newsResponse.filter(item => 
+        item.content_type?.name?.toLowerCase().includes('news') ||
+        item.content_type?.name?.toLowerCase().includes('announcement') ||
+        item.tags?.some(tag => tag.toLowerCase().includes('news'))
+      );
+
+      setNewsItems(newsContent);
+      
+      // Extract categories from content types and tags
+      const categorySet = new Set<string>(["All"]);
+      newsContent.forEach(item => {
+        if (item.content_type?.name) {
+          categorySet.add(item.content_type.name);
+        }
+        item.tags?.forEach(tag => categorySet.add(tag));
+      });
+      
+      setCategories(Array.from(categorySet));
+      
+    } catch (err: unknown) {
+      console.error('Error loading news:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load news');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const filteredNews = newsItems.filter(news => {
+    const matchesCategory = selectedCategory === "All" || 
+      news.content_type?.name === selectedCategory ||
+      news.tags?.includes(selectedCategory);
     const matchesSearch = searchQuery === "" || 
       news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      news.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      news.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      (news.excerpt && news.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      news.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
-  const pinnedNews = filteredNews.filter(news => news.isPinned);
-  const regularNews = filteredNews.filter(news => !news.isPinned);
+  const pinnedNews = filteredNews.filter(news => news.is_featured);
+  const regularNews = filteredNews.filter(news => !news.is_featured);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -165,6 +131,19 @@ export default function News() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+              ×
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="relative overflow-hidden bg-gradient-to-r from-primary/20 via-card to-primary/10 rounded-xl p-6 border border-primary/30">
           <div className="flex items-center justify-between">
@@ -177,6 +156,12 @@ export default function News() {
                 <p className="text-muted-foreground">
                   Stay informed about the latest news, events, and announcements from our community
                 </p>
+                <div className="flex items-center gap-4 mt-2 text-sm">
+                  <span className="flex items-center gap-1 text-primary">
+                    <Newspaper size={14} />
+                    {newsItems.length} Articles
+                  </span>
+                </div>
               </div>
             </div>
             <Button
@@ -217,127 +202,134 @@ export default function News() {
           </div>
         </div>
 
-        {/* Pinned News */}
-        {pinnedNews.length > 0 && (
-          <div>
-            <h3 className="font-display text-xl mb-4 flex items-center gap-2">
-              <Pin size={20} className="text-primary" />
-              Pinned Announcements
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {pinnedNews.map((news, index) => (
-                <div 
-                  key={news.id}
-                  className="bg-card rounded-xl border border-primary/30 p-6 hover:border-primary/50 transition-all duration-300 cursor-pointer animate-slide-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                  onClick={() => setSelectedNews(news)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Pin size={16} className="text-primary" />
-                      <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
-                        {news.category}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimeAgo(news.publishedAt)}
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-display text-lg mb-2 text-primary">{news.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{news.excerpt}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <User size={12} />
-                        {news.author}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye size={12} />
-                        {news.views}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare size={12} />
-                        {news.comments}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading news...</p>
             </div>
           </div>
-        )}
-
-        {/* Regular News */}
-        <div>
-          <h3 className="font-display text-xl mb-4 flex items-center gap-2">
-            <TrendingUp size={20} className="text-primary" />
-            Latest News
-          </h3>
-          <div className="space-y-4">
-            {regularNews.map((news, index) => (
-              <div 
-                key={news.id}
-                className="bg-card rounded-xl border border-border/30 p-6 hover:border-primary/50 transition-all duration-300 cursor-pointer animate-slide-up"
-                style={{ animationDelay: `${(index + pinnedNews.length) * 100}ms` }}
-                onClick={() => setSelectedNews(news)}
-              >
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs px-2 py-1 rounded-md bg-secondary text-foreground">
-                        {news.category}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(news.publishedAt)}
-                      </span>
-                    </div>
-                    
-                    <h3 className="font-display text-xl mb-2 hover:text-primary transition-colors">
-                      {news.title}
-                    </h3>
-                    <p className="text-muted-foreground mb-4">{news.excerpt}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <User size={14} />
-                          {news.author}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {news.views} views
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare size={14} />
-                          {news.comments} comments
+        ) : (
+          <>
+            {/* Pinned News */}
+            {pinnedNews.length > 0 && (
+              <div>
+                <h3 className="font-display text-xl mb-4 flex items-center gap-2">
+                  <Pin size={20} className="text-primary" />
+                  Featured Announcements
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {pinnedNews.map((news, index) => (
+                    <div 
+                      key={news.id}
+                      className="bg-card rounded-xl border border-primary/30 p-6 hover:border-primary/50 transition-all duration-300 cursor-pointer animate-slide-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                      onClick={() => setSelectedNews(news)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Pin size={16} className="text-primary" />
+                          <span className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">
+                            {news.content_type?.name || 'Featured'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {news.published_at && formatTimeAgo(news.published_at)}
                         </span>
                       </div>
-                      <div className="flex gap-2">
-                        {news.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary">
-                            #{tag}
+                      
+                      <h3 className="font-display text-lg mb-2 text-primary">{news.title}</h3>
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                        {news.excerpt || (typeof news.content === 'object' && news.content && 'excerpt' in news.content ? String(news.content.excerpt) : '') || 'No excerpt available'}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <User size={12} />
+                            {news.author?.full_name || 'Admin'}
                           </span>
-                        ))}
+                        </div>
+                        <div className="flex gap-2">
+                          {news.tags?.slice(0, 2).map((tag) => (
+                            <span key={tag} className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Regular News */}
+            <div>
+              <h3 className="font-display text-xl mb-4 flex items-center gap-2">
+                <TrendingUp size={20} className="text-primary" />
+                Latest News
+              </h3>
+              <div className="space-y-4">
+                {regularNews.map((news, index) => (
+                  <div 
+                    key={news.id}
+                    className="bg-card rounded-xl border border-border/30 p-6 hover:border-primary/50 transition-all duration-300 cursor-pointer animate-slide-up"
+                    style={{ animationDelay: `${(index + pinnedNews.length) * 100}ms` }}
+                    onClick={() => setSelectedNews(news)}
+                  >
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs px-2 py-1 rounded-md bg-secondary text-foreground">
+                            {news.content_type?.name || 'News'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {news.published_at && formatDate(news.published_at)}
+                          </span>
+                        </div>
+                        
+                        <h3 className="font-display text-xl mb-2 hover:text-primary transition-colors">
+                          {news.title}
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          {news.excerpt || (typeof news.content === 'object' && news.content && 'excerpt' in news.content ? String(news.content.excerpt) : '') || 'No excerpt available'}
+                        </p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <User size={14} />
+                              {news.author?.full_name || 'Admin'}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            {news.tags?.slice(0, 3).map((tag) => (
+                              <span key={tag} className="text-xs px-2 py-1 rounded-md bg-primary/10 text-primary">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* No Results */}
-        {filteredNews.length === 0 && (
-          <div className="text-center py-12">
-            <Newspaper size={48} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No news found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search or category filter.
-            </p>
-          </div>
+            {/* No Results */}
+            {filteredNews.length === 0 && (
+              <div className="text-center py-12">
+                <Newspaper size={48} className="mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No news found</h3>
+                <p className="text-muted-foreground">
+                  Try adjusting your search or category filter.
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Newsletter Signup */}

@@ -40,7 +40,8 @@ import {
   Palette,
   Image,
   Store,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -68,6 +69,7 @@ const mainNavItems: NavItem[] = [
 
 const islamicNavItems: NavItem[] = [
   { icon: Sparkles, label: "Islamic Features", href: "/islamic-features" },
+  { icon: GraduationCap, label: "Course Enrollment", href: "/islamic-course-enrollment" },
   { icon: Clock, label: "Prayer Times", href: "/prayer-times" },
   { icon: Bell, label: "Prayer Reminders", href: "/prayer-reminders" },
   { icon: BookOpen, label: "Quran Audio Player", href: "/quran-audio" },

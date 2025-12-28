@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useContent } from "@/hooks/useContent";
 import { 
@@ -70,9 +70,9 @@ export default function ContentPage() {
 
   useEffect(() => {
     fetchContent();
-  }, []);
+  }, [fetchContent]);
 
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     try {
       // For now, using mock data. In production, this would fetch from Supabase
       const mockContent: ContentItem[] = [
@@ -153,7 +153,7 @@ export default function ContentPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -496,7 +496,7 @@ function ContentCard({ item, delay, onDelete, typeConfig }: {
   item: ContentItem; 
   delay: number; 
   onDelete: (id: string) => void;
-  typeConfig: any;
+  typeConfig: unknown;
 }) {
   const config = typeConfig[item.type];
   const Icon = config.icon;
@@ -572,7 +572,7 @@ function ContentListItem({ item, delay, onDelete, typeConfig }: {
   item: ContentItem; 
   delay: number; 
   onDelete: (id: string) => void;
-  typeConfig: any;
+  typeConfig: unknown;
 }) {
   const config = typeConfig[item.type];
   const Icon = config.icon;

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import PrayerTracker from "@/components/islamic/PrayerTracker";
 import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
 
@@ -8,7 +8,7 @@ export default function PrayerTrackerPage() {
   const navigate = useNavigate();
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Prayer Tracker" 
       subtitle="Track your daily prayers and build consistent habits"
       currentPath={location.pathname}
@@ -23,6 +23,6 @@ export default function PrayerTrackerPage() {
           <IslamicEducationFiller type="tip" size="medium" />
         </div>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

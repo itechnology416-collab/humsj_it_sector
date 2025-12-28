@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { eventApi, type Event, type EventRegistration } from "@/services/eventApi";
 import { 
   Calendar, 
   Clock, 
@@ -18,103 +19,70 @@ import {
   Search,
   Eye,
   Edit,
-  Share2
+  Share2,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const registeredEvents = [
-  {
-    id: 1,
-    title: "Friday Prayer & Khutbah",
-    date: "2024-12-22",
-    time: "12:30 PM",
-    location: "Main Prayer Hall",
-    status: "confirmed",
-    attendance: "present",
-    type: "prayer",
-    organizer: "Islamic Center",
-    description: "Weekly congregational prayer with Islamic guidance",
-    certificate: true,
-    feedback: false
-  },
-  {
-    id: 2,
-    title: "IT Workshop: Web Development",
-    date: "2024-12-25",
-    time: "2:00 PM",
-    location: "Computer Lab",
-    status: "confirmed",
-    attendance: "pending",
-    type: "workshop",
-    organizer: "Academic Sector",
-    description: "Learn modern web development techniques",
-    certificate: false,
-    feedback: false
-  },
-  {
-    id: 3,
-    title: "Quran Study Circle",
-    date: "2024-12-20",
-    time: "4:00 PM",
-    location: "Study Room A",
-    status: "completed",
-    attendance: "present",
-    type: "education",
-    organizer: "Education Committee",
-    description: "Weekly Quran study and discussion",
-    certificate: true,
-    feedback: true
-  },
-  {
-    id: 4,
-    title: "Community Iftar",
-    date: "2024-12-18",
-    time: "6:30 PM",
-    location: "Community Hall",
-    status: "completed",
-    attendance: "absent",
-    type: "social",
-    organizer: "Social Committee",
-    description: "Community gathering for breaking fast",
-    certificate: false,
-    feedback: false
-  }
-];
-
-const eventCertificates = [
-  {
-    id: 1,
-    eventTitle: "Islamic Ethics Workshop",
-    issueDate: "2024-12-15",
-    certificateId: "IEC-2024-001",
-    type: "Completion Certificate"
-  },
-  {
-    id: 2,
-    eventTitle: "Quran Recitation Competition",
-    issueDate: "2024-11-30",
-    certificateId: "QRC-2024-002",
-    type: "Participation Certificate"
-  }
-];
+import { toast } from "sonner";
 
 export default function MyEvents() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // State for data
+  const [registeredEvents, setRegisteredEvents] = useState<EventRegistration[]>([]);
+  const [eventCertificates, setEventCertificates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [activeTab, setActiveTab] = useState("registered");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const tabs = [
-    { id: "registered", label: "Registered Events", icon: Calendar },
-    { id: "attendance", label: "Attendance Status", icon: CheckCircle },
-    { id: "certificates", label: "Certificates", icon: Award },
-    { id: "feedback", label: "Event Feedback", icon: MessageSquare }
-  ];
+  // Load data
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (user) {
+        const userRegistrations = await eventApi.getUserRegistrations();
+        setRegisteredEvents(userRegistrations);
+        
+        // Mock certificates for now - would come from a certificates API
+        setEventCertificates([
+          {
+            id: 1,
+            eventTitle: "Islamic Ethics Workshop",
+            issueDate: "2024-12-15",
+            certificateId: "IEC-2024-001",
+            type: "Completion Certificate"
+          },
+          {
+            id: 2,
+            eventTitle: "Quran Recitation Competition",
+            issueDate: "2024-11-30",
+            certificateId: "QRC-2024-002",
+            type: "Participation Certificate"
+          }
+        ]);
+      }
+    } catch (err: unknown) {
+      console.error('Error loading events:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load events');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [user, loadData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -154,10 +122,20 @@ export default function MyEvents() {
     }
   };
 
-  const filteredEvents = registeredEvents.filter(event => {
+  const tabs = [
+    { id: "registered", label: "Registered Events", icon: Calendar },
+    { id: "attendance", label: "Attendance Status", icon: CheckCircle },
+    { id: "certificates", label: "Certificates", icon: Award },
+    { id: "feedback", label: "Event Feedback", icon: MessageSquare }
+  ];
+
+  const filteredEvents = registeredEvents.filter(registration => {
+    const event = registration.event;
+    if (!event) return false;
+    
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         event.organizer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === "all" || event.status === filterStatus;
+                         event.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === "all" || registration.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -169,6 +147,19 @@ export default function MyEvents() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+              ×
+            </Button>
+          </div>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
@@ -180,7 +171,7 @@ export default function MyEvents() {
             },
             { 
               label: "Attended", 
-              value: registeredEvents.filter(e => e.attendance === "present").length.toString(), 
+              value: registeredEvents.filter(r => r.status === "attended").length.toString(), 
               icon: CheckCircle, 
               color: "text-green-400" 
             },
@@ -192,7 +183,7 @@ export default function MyEvents() {
             },
             { 
               label: "Pending Feedback", 
-              value: registeredEvents.filter(e => e.status === "completed" && !e.feedback).length.toString(), 
+              value: registeredEvents.filter(r => r.status === "attended").length.toString(), 
               icon: MessageSquare, 
               color: "text-blue-400" 
             }
@@ -260,160 +251,183 @@ export default function MyEvents() {
 
         {/* Content */}
         <div className="space-y-4">
-          {activeTab === "registered" && (
-            <div className="space-y-4">
-              {filteredEvents.map((event) => {
-                const TypeIcon = getTypeIcon(event.type);
-                const AttendanceIcon = getAttendanceIcon(event.attendance);
-                
-                return (
-                  <div 
-                    key={event.id}
-                    className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300"
-                  >
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <TypeIcon size={24} className="text-primary" />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
-                          <div>
-                            <h3 className="text-xl font-display tracking-wide mb-2">{event.title}</h3>
-                            <p className="text-muted-foreground text-sm mb-2">{event.description}</p>
-                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar size={14} />
-                                {new Date(event.date).toLocaleDateString()}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock size={14} />
-                                {event.time}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MapPin size={14} />
-                                {event.location}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users size={14} />
-                                {event.organizer}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col gap-2 mt-4 md:mt-0">
-                            <Badge className={cn("text-xs", getStatusColor(event.status))}>
-                              {event.status.toUpperCase()}
-                            </Badge>
-                            <div className="flex items-center gap-1 text-xs">
-                              <AttendanceIcon size={14} className={getAttendanceColor(event.attendance)} />
-                              <span className={getAttendanceColor(event.attendance)}>
-                                {event.attendance.charAt(0).toUpperCase() + event.attendance.slice(1)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
-                            <Eye size={14} />
-                            View Details
-                          </Button>
-                          
-                          {event.status === "confirmed" && (
-                            <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
-                              <Edit size={14} />
-                              Modify Registration
-                            </Button>
-                          )}
-                          
-                          {event.certificate && (
-                            <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
-                              <Download size={14} />
-                              Certificate
-                            </Button>
-                          )}
-                          
-                          {event.status === "completed" && !event.feedback && (
-                            <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1">
-                              <MessageSquare size={14} />
-                              Give Feedback
-                            </Button>
-                          )}
-                          
-                          <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
-                            <Share2 size={14} />
-                            Share
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {activeTab === "attendance" && (
-            <div className="space-y-4">
-              <div className="bg-card rounded-xl p-6 border border-border/30">
-                <h3 className="text-lg font-display mb-4">Attendance Summary</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  {[
-                    { 
-                      label: "Present", 
-                      count: registeredEvents.filter(e => e.attendance === "present").length,
-                      color: "text-green-400",
-                      bg: "bg-green-500/10"
-                    },
-                    { 
-                      label: "Absent", 
-                      count: registeredEvents.filter(e => e.attendance === "absent").length,
-                      color: "text-red-400",
-                      bg: "bg-red-500/10"
-                    },
-                    { 
-                      label: "Pending", 
-                      count: registeredEvents.filter(e => e.attendance === "pending").length,
-                      color: "text-amber-400",
-                      bg: "bg-amber-500/10"
-                    }
-                  ].map((stat) => (
-                    <div key={stat.label} className={cn("p-4 rounded-lg", stat.bg)}>
-                      <p className={cn("text-2xl font-display", stat.color)}>{stat.count}</p>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-3">
-                  {registeredEvents.map((event) => {
-                    const AttendanceIcon = getAttendanceIcon(event.attendance);
-                    return (
-                      <div 
-                        key={event.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
-                      >
-                        <div className="flex items-center gap-3">
-                          <AttendanceIcon size={20} className={getAttendanceColor(event.attendance)} />
-                          <div>
-                            <p className="font-medium text-sm">{event.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(event.date).toLocaleDateString()} • {event.time}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge className={cn("text-xs", getAttendanceColor(event.attendance))}>
-                          {event.attendance.charAt(0).toUpperCase() + event.attendance.slice(1)}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading your events...</p>
               </div>
             </div>
-          )}
+          ) : (
+            <>
+              {activeTab === "registered" && (
+                <div className="space-y-4">
+                  {filteredEvents.length > 0 ? (
+                    filteredEvents.map((registration) => {
+                      const event = registration.event;
+                      if (!event) return null;
+                      
+                      const TypeIcon = getTypeIcon(event.category?.name || 'general');
+                      const AttendanceIcon = getAttendanceIcon(registration.attendance_status || 'pending');
+                      
+                      return (
+                        <div 
+                          key={registration.id}
+                          className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/50 transition-all duration-300"
+                        >
+                          <div className="flex flex-col lg:flex-row gap-6">
+                            <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                              <TypeIcon size={24} className="text-primary" />
+                            </div>
+                            
+                            <div className="flex-1">
+                              <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
+                                <div>
+                                  <h3 className="text-xl font-display tracking-wide mb-2">{event.title}</h3>
+                                  <p className="text-muted-foreground text-sm mb-2">{event.description}</p>
+                                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar size={14} />
+                                      {new Date(event.start_date).toLocaleDateString()}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Clock size={14} />
+                                      {new Date(event.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <MapPin size={14} />
+                                      {event.location}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Users size={14} />
+                                      {event.category?.name || 'General'}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-2 mt-4 md:mt-0">
+                                  <Badge className={cn("text-xs", getStatusColor(registration.status))}>
+                                    {registration.status.toUpperCase()}
+                                  </Badge>
+                                  <div className="flex items-center gap-1 text-xs">
+                                    <AttendanceIcon size={14} className={getAttendanceColor(registration.attendance_status || 'pending')} />
+                                    <span className={getAttendanceColor(registration.attendance_status || 'pending')}>
+                                      {(registration.attendance_status || 'pending').charAt(0).toUpperCase() + (registration.attendance_status || 'pending').slice(1)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
+                                  <Eye size={14} />
+                                  View Details
+                                </Button>
+                                
+                                {registration.status === "confirmed" && (
+                                  <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
+                                    <Edit size={14} />
+                                    Modify Registration
+                                  </Button>
+                                )}
+                                
+                                {registration.status === "attended" && (
+                                  <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
+                                    <Download size={14} />
+                                    Certificate
+                                  </Button>
+                                )}
+                                
+                                {registration.status === "attended" && (
+                                  <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1">
+                                    <MessageSquare size={14} />
+                                    Give Feedback
+                                  </Button>
+                                )}
+                                
+                                <Button size="sm" variant="outline" className="border-border/50 hover:border-primary gap-1">
+                                  <Share2 size={14} />
+                                  Share
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-20">
+                      <Calendar size={64} className="mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-display mb-2">No Registered Events</h3>
+                      <p className="text-muted-foreground">Start registering for events to see them here.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "attendance" && (
+                <div className="space-y-4">
+                  <div className="bg-card rounded-xl p-6 border border-border/30">
+                    <h3 className="text-lg font-display mb-4">Attendance Summary</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      {[
+                        { 
+                          label: "Present", 
+                          count: registeredEvents.filter(r => r.status === "attended").length,
+                          color: "text-green-400",
+                          bg: "bg-green-500/10"
+                        },
+                        { 
+                          label: "Absent", 
+                          count: registeredEvents.filter(r => r.status === "no_show").length,
+                          color: "text-red-400",
+                          bg: "bg-red-500/10"
+                        },
+                        { 
+                          label: "Pending", 
+                          count: registeredEvents.filter(r => r.status === "registered").length,
+                          color: "text-amber-400",
+                          bg: "bg-amber-500/10"
+                        }
+                      ].map((stat) => (
+                        <div key={stat.label} className={cn("p-4 rounded-lg", stat.bg)}>
+                          <p className={cn("text-2xl font-display", stat.color)}>{stat.count}</p>
+                          <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-3">
+                      {registeredEvents.map((registration) => {
+                        const event = registration.event;
+                        if (!event) return null;
+                        
+                        const AttendanceIcon = getAttendanceIcon(registration.attendance_status || 'pending');
+                        return (
+                          <div 
+                            key={registration.id}
+                            className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
+                          >
+                            <div className="flex items-center gap-3">
+                              <AttendanceIcon size={20} className={getAttendanceColor(registration.attendance_status || 'pending')} />
+                              <div>
+                                <p className="font-medium text-sm">{event.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(event.start_date).toLocaleDateString()} • {new Date(event.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge className={cn("text-xs", getAttendanceColor(registration.attendance_status || 'pending'))}>
+                              {(registration.attendance_status || 'pending').charAt(0).toUpperCase() + (registration.attendance_status || 'pending').slice(1)}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
 
           {activeTab === "certificates" && (
             <div className="space-y-4">
@@ -460,14 +474,16 @@ export default function MyEvents() {
             </div>
           )}
 
-          {activeTab === "feedback" && (
-            <div className="space-y-4">
-              <div className="text-center py-20">
-                <MessageSquare size={64} className="mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-display mb-2">Event Feedback</h3>
-                <p className="text-muted-foreground">Share your experience and help us improve.</p>
-              </div>
-            </div>
+              {activeTab === "feedback" && (
+                <div className="space-y-4">
+                  <div className="text-center py-20">
+                    <MessageSquare size={64} className="mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-display mb-2">Event Feedback</h3>
+                    <p className="text-muted-foreground">Share your experience and help us improve.</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

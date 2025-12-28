@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAI } from "@/contexts/AIContext";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import SmartRecommendations from "@/components/ai/SmartRecommendations";
 import SmartPrayerTimes from "@/components/ai/SmartPrayerTimes";
 import { IslamicProgramsSchedule } from "@/components/islamic/IslamicProgramsSchedule";
@@ -107,7 +108,7 @@ export default function UserDashboard() {
   if (!user) return null;
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Dashboard" 
       subtitle="Welcome back"
       currentPath={location.pathname}
@@ -471,11 +472,11 @@ export default function UserDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               { label: "Learning Center", icon: BookOpen, path: "/learning-center", color: "text-blue-400", bg: "bg-blue-500/10" },
+              { label: "Course Enrollment", icon: GraduationCap, path: "/islamic-course-enrollment", color: "text-emerald-400", bg: "bg-emerald-500/10" },
               { label: "Quran Audio", icon: Star, path: "/quran-audio", color: "text-green-400", bg: "bg-green-500/10" },
               { label: "Prayer Tracker", icon: Clock, path: "/prayer-tracker", color: "text-purple-400", bg: "bg-purple-500/10" },
               { label: "Digital Tasbih", icon: Heart, path: "/dhikr-counter", color: "text-red-400", bg: "bg-red-500/10" },
-              { label: "AI Voice", icon: Bot, path: "/ai-voice-assistant", color: "text-amber-400", bg: "bg-amber-500/10" },
-              { label: "AI Insights", icon: Brain, path: "/ai-insights", color: "text-purple-400", bg: "bg-purple-500/10" }
+              { label: "AI Voice", icon: Bot, path: "/ai-voice-assistant", color: "text-amber-400", bg: "bg-amber-500/10" }
             ].map((action, index) => (
               <button
                 key={action.label}
@@ -606,6 +607,6 @@ export default function UserDashboard() {
         {/* Islamic Programs Schedule */}
         <IslamicProgramsSchedule className="mt-8" />
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

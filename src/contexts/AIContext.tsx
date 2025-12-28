@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
 interface AIContextType {
@@ -46,7 +46,7 @@ interface VoiceSettings {
 const AIContext = createContext<AIContextType | undefined>(undefined);
 
 export function AIProvider({ children }: { children: React.ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isAIAssistantMinimized, setIsAIAssistantMinimized] = useState(false);
   const [aiRecommendations, setAIRecommendations] = useState<AIRecommendation[]>([]);
@@ -70,7 +70,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   });
 
   // Generate AI recommendations based on user data
-  const generateRecommendations = () => {
+  const generateRecommendations = useCallback(() => {
     if (!user) return [];
 
     const recommendations: AIRecommendation[] = [
@@ -113,7 +113,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     ];
 
     return recommendations;
-  };
+  }, [user]);
 
   // Generate AI insights
   const generateInsights = (): AIInsights => {
@@ -138,10 +138,10 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     setIsAIAssistantMinimized(!isAIAssistantMinimized);
   };
 
-  const refreshRecommendations = () => {
+  const refreshRecommendations = useCallback(() => {
     setAIRecommendations(generateRecommendations());
     setAIInsights(generateInsights());
-  };
+  }, [generateRecommendations]);
 
   // Voice Assistant Functions
   const toggleVoiceAssistant = () => {
@@ -158,7 +158,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       setAIRecommendations(generateRecommendations());
       setAIInsights(generateInsights());
     }
-  }, [user]);
+  }, [user, generateRecommendations]);
 
   // Auto-refresh recommendations every hour
   useEffect(() => {
@@ -169,7 +169,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
 
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, refreshRecommendations]);
 
   const value = {
     isAIAssistantOpen,

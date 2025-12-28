@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import DhikrCounter from "@/components/islamic/DhikrCounter";
 import IslamicEducationFiller from "@/components/islamic/IslamicEducationFiller";
 
@@ -8,7 +8,7 @@ export default function DhikrCounterPage() {
   const navigate = useNavigate();
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Digital Tasbih" 
       subtitle="Keep track of your dhikr and remembrance of Allah"
       currentPath={location.pathname}
@@ -23,6 +23,6 @@ export default function DhikrCounterPage() {
           <IslamicEducationFiller type="quote" size="medium" />
         </div>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }

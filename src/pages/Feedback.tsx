@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -244,7 +244,7 @@ export default function FeedbackPage() {
 
   const stats = getFeedbackStats();
 
-  const handleSubmitFeedback = (formData: any) => {
+  const handleSubmitFeedback = (formData: unknown) => {
     const newFeedback: FeedbackItem = {
       id: Date.now().toString(),
       title: formData.title,
@@ -697,7 +697,7 @@ export default function FeedbackPage() {
 }
 
 // Feedback Form Component
-function FeedbackForm({ onSubmit }: { onSubmit: (data: any) => void }) {
+function FeedbackForm({ onSubmit }: { onSubmit: (data: unknown) => void }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',

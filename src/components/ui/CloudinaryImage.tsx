@@ -64,7 +64,7 @@ export default function CloudinaryImage({
   const publicId = getPublicId(src);
 
   // Build transformations
-  const transformations: any = {};
+  const transformations: Record<string, string | number> = {};
   
   if (width) transformations.width = width;
   if (height) transformations.height = height;

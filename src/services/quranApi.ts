@@ -53,6 +53,23 @@ export interface Reciter {
   relative_path: string;
   format: string;
   files_size: number;
+  style?: string;
+  description?: string;
+  country?: string;
+  audio_url_template?: string;
+}
+
+export interface ReciterAudioSource {
+  id: string;
+  name: string;
+  arabic_name: string;
+  description: string;
+  country: string;
+  style: string;
+  base_url: string;
+  format: string;
+  quality: 'high' | 'medium' | 'low';
+  sample_rate?: string;
 }
 
 export interface QuranApiResponse<T> {
@@ -70,8 +87,108 @@ export interface QuranApiResponse<T> {
 
 export class QuranApiService {
   private baseUrl = 'https://api.quran.com/api/v4';
-  private cache = new Map<string, { data: any; timestamp: number }>();
+  private cache = new Map<string, { data: unknown; timestamp: number }>();
   private cacheTimeout = APP_CONFIG.limits.cacheTimeout;
+
+  // Enhanced reciters with the requested ones
+  private enhancedReciters: ReciterAudioSource[] = [
+    {
+      id: 'ali_jabir',
+      name: 'Ali Jabir',
+      arabic_name: 'علي جابر',
+      description: 'Beautiful and melodious recitation with perfect Tajweed',
+      country: 'Saudi Arabia',
+      style: 'Melodious',
+      base_url: 'https://server8.mp3quran.net/ali_jaber',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'abdullah_basfar',
+      name: 'Abdullah Basfar',
+      arabic_name: 'عبد الله بصفر',
+      description: 'Emotional and heart-touching recitation',
+      country: 'Saudi Arabia',
+      style: 'Emotional',
+      base_url: 'https://server8.mp3quran.net/basfar',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'abdulwadud_haneef',
+      name: 'Abdulwadud Haneef',
+      arabic_name: 'عبد الودود حنيف',
+      description: 'Clear and precise recitation with excellent pronunciation',
+      country: 'India',
+      style: 'Clear',
+      base_url: 'https://server8.mp3quran.net/abdulwadud',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'eyman_rushed',
+      name: 'Dr. Eyman Rushed',
+      arabic_name: 'د. إيمان رشيد',
+      description: 'Female reciter with beautiful voice and perfect Tajweed',
+      country: 'Egypt',
+      style: 'Classical',
+      base_url: 'https://server8.mp3quran.net/eyman_rushed',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'mahmud_kalil',
+      name: 'Mahmud Kalil Al-Husary',
+      arabic_name: 'محمود خليل الحصري',
+      description: 'Legendary reciter known for teaching Tajweed',
+      country: 'Egypt',
+      style: 'Educational',
+      base_url: 'https://server8.mp3quran.net/husary',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'abdullah_huthaif',
+      name: 'Abdullah Ali Huthaif',
+      arabic_name: 'عبد الله علي هذيف',
+      description: 'Young reciter with modern style and clear voice',
+      country: 'Saudi Arabia',
+      style: 'Modern',
+      base_url: 'https://server8.mp3quran.net/huthaif',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'mishary_alafasy',
+      name: 'Mishary Rashid Alafasy',
+      arabic_name: 'مشاري بن راشد العفاسي',
+      description: 'Popular reciter with melodious voice',
+      country: 'Kuwait',
+      style: 'Melodious',
+      base_url: 'https://server8.mp3quran.net/afs',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    },
+    {
+      id: 'abdul_rahman_sudais',
+      name: 'Abdul Rahman Al-Sudais',
+      arabic_name: 'عبد الرحمن السديس',
+      description: 'Imam of Masjid al-Haram with emotional recitation',
+      country: 'Saudi Arabia',
+      style: 'Emotional',
+      base_url: 'https://server8.mp3quran.net/sudais',
+      format: 'mp3',
+      quality: 'high',
+      sample_rate: '128kbps'
+    }
+  ];
 
   // Get all chapters (Surahs)
   async getChapters(): Promise<Chapter[]> {
@@ -110,7 +227,7 @@ export class QuranApiService {
     page: number = 1,
     perPage: number = 50,
     translations: number[] = [131] // English - Sahih International
-  ): Promise<{ verses: QuranVerse[]; pagination: any }> {
+  ): Promise<{ verses: QuranVerse[]; pagination: unknown }> {
     const translationsParam = translations.join(',');
     const cacheKey = `chapter-${chapterId}-${page}-${perPage}-${translationsParam}`;
     const cached = this.cache.get(cacheKey);
@@ -242,7 +359,7 @@ export class QuranApiService {
     }
   }
 
-  // Get available reciters
+  // Get available reciters (enhanced with local reciters)
   async getReciters(): Promise<Reciter[]> {
     const cacheKey = 'reciters';
     const cached = this.cache.get(cacheKey);
@@ -252,25 +369,97 @@ export class QuranApiService {
     }
 
     try {
+      // First try to get from API
       const response = await fetch(`${this.baseUrl}/resources/recitations`);
+      let apiReciters: Reciter[] = [];
       
-      if (!response.ok) {
-        throw new Error(`Reciters API error: ${response.status}`);
+      if (response.ok) {
+        const data = await response.json();
+        apiReciters = data.recitations || [];
       }
 
-      const data = await response.json();
-      const reciters = data.recitations || [];
+      // Convert enhanced reciters to Reciter format and merge with API reciters
+      const enhancedAsReciters: Reciter[] = this.enhancedReciters.map((reciter, index) => ({
+        id: 1000 + index, // Use high IDs to avoid conflicts
+        name: reciter.name,
+        arabic_name: reciter.arabic_name,
+        relative_path: reciter.id,
+        format: reciter.format,
+        files_size: 0,
+        style: reciter.style,
+        description: reciter.description,
+        country: reciter.country,
+        audio_url_template: reciter.base_url
+      }));
+
+      // Merge and deduplicate
+      const allReciters = [...enhancedAsReciters, ...apiReciters];
+      const uniqueReciters = allReciters.filter((reciter, index, self) => 
+        index === self.findIndex(r => r.name === reciter.name)
+      );
 
       this.cache.set(cacheKey, {
-        data: reciters,
+        data: uniqueReciters,
         timestamp: Date.now(),
       });
 
-      return reciters;
+      return uniqueReciters;
     } catch (error) {
       console.error('Error fetching reciters:', error);
       return this.getFallbackReciters();
     }
+  }
+
+  // Get enhanced reciters with additional metadata
+  getEnhancedReciters(): ReciterAudioSource[] {
+    return this.enhancedReciters;
+  }
+
+  // Get audio URL for specific reciter and chapter
+  getAudioUrl(reciterId: string | number, chapterNumber: number): string {
+    // Handle both string and number IDs
+    const reciterIdStr = typeof reciterId === 'string' ? reciterId : reciterId.toString();
+    
+    // Find enhanced reciter first
+    const enhancedReciter = this.enhancedReciters.find(r => 
+      r.id === reciterIdStr || r.id === `reciter_${reciterId}`
+    );
+    
+    if (enhancedReciter) {
+      const chapterStr = String(chapterNumber).padStart(3, '0');
+      return `${enhancedReciter.base_url}/${chapterStr}.${enhancedReciter.format}`;
+    }
+
+    // Fallback to default URL structure
+    const chapterStr = String(chapterNumber).padStart(3, '0');
+    return `https://server8.mp3quran.net/afs/${chapterStr}.mp3`;
+  }
+
+  // Get multiple audio sources for a chapter (for quality options)
+  getMultipleAudioSources(chapterNumber: number): Array<{
+    reciter: ReciterAudioSource;
+    url: string;
+  }> {
+    return this.enhancedReciters.map(reciter => ({
+      reciter,
+      url: this.getAudioUrl(reciter.id, chapterNumber)
+    }));
+  }
+
+  // Validate audio URL availability
+  async validateAudioUrl(url: string): Promise<boolean> {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  // Get reciter by ID
+  getReciterById(id: string | number): ReciterAudioSource | null {
+    const idStr = typeof id === 'string' ? id : id.toString();
+    return this.enhancedReciters.find(r => r.id === idStr) || null;
   }
 
   // Search verses
@@ -279,7 +468,7 @@ export class QuranApiService {
     page: number = 1,
     perPage: number = 20,
     translations: number[] = [131]
-  ): Promise<{ verses: QuranVerse[]; pagination: any }> {
+  ): Promise<{ verses: QuranVerse[]; pagination: unknown }> {
     try {
       const translationsParam = translations.join(',');
       const url = `${this.baseUrl}/search`;
@@ -331,16 +520,18 @@ export class QuranApiService {
   }
 
   private getFallbackReciters(): Reciter[] {
-    return [
-      {
-        id: 7,
-        name: 'Mishary Rashid Alafasy',
-        arabic_name: 'مشاري بن راشد العفاسي',
-        relative_path: 'mishary_rashid_alafasy',
-        format: 'mp3',
-        files_size: 1024000
-      },
-    ];
+    return this.enhancedReciters.map((reciter, index) => ({
+      id: 1000 + index,
+      name: reciter.name,
+      arabic_name: reciter.arabic_name,
+      relative_path: reciter.id,
+      format: reciter.format,
+      files_size: 0,
+      style: reciter.style,
+      description: reciter.description,
+      country: reciter.country,
+      audio_url_template: reciter.base_url
+    }));
   }
 
   private getFallbackVerse(): QuranVerse {

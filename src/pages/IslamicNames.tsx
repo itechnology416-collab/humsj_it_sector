@@ -329,7 +329,7 @@ export default function IslamicNames() {
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as unknown)}
             className="px-4 py-3 rounded-xl bg-card border border-border/50 focus:border-primary outline-none"
           >
             <option value="popularity">Most Popular</option>

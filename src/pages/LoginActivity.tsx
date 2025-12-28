@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -19,149 +19,114 @@ import {
   Globe,
   Lock,
   Unlock,
-  Activity
+  Activity,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const loginHistory = [
-  {
-    id: 1,
-    timestamp: "2024-12-21T16:30:00Z",
-    device: "Windows PC",
-    deviceType: "desktop",
-    browser: "Chrome 120.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.100",
-    status: "success",
-    isCurrentSession: true,
-    suspicious: false
-  },
-  {
-    id: 2,
-    timestamp: "2024-12-21T08:15:00Z",
-    device: "iPhone 15",
-    deviceType: "mobile",
-    browser: "Safari 17.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.101",
-    status: "success",
-    isCurrentSession: false,
-    suspicious: false
-  },
-  {
-    id: 3,
-    timestamp: "2024-12-20T19:45:00Z",
-    device: "MacBook Pro",
-    deviceType: "desktop",
-    browser: "Firefox 121.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.102",
-    status: "success",
-    isCurrentSession: false,
-    suspicious: false
-  },
-  {
-    id: 4,
-    timestamp: "2024-12-20T14:22:00Z",
-    device: "Android Phone",
-    deviceType: "mobile",
-    browser: "Chrome Mobile 120.0",
-    location: "Dire Dawa, Ethiopia",
-    ipAddress: "10.0.0.50",
-    status: "failed",
-    isCurrentSession: false,
-    suspicious: true,
-    failureReason: "Invalid password"
-  },
-  {
-    id: 5,
-    timestamp: "2024-12-19T22:10:00Z",
-    device: "iPad Air",
-    deviceType: "tablet",
-    browser: "Safari 17.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.103",
-    status: "success",
-    isCurrentSession: false,
-    suspicious: false
-  },
-  {
-    id: 6,
-    timestamp: "2024-12-19T11:30:00Z",
-    device: "Unknown Device",
-    deviceType: "unknown",
-    browser: "Unknown Browser",
-    location: "Lagos, Nigeria",
-    ipAddress: "41.203.72.45",
-    status: "blocked",
-    isCurrentSession: false,
-    suspicious: true,
-    failureReason: "Suspicious location"
-  }
-];
-
-const activeSessions = [
-  {
-    id: 1,
-    device: "Windows PC",
-    deviceType: "desktop",
-    browser: "Chrome 120.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.100",
-    lastActivity: "2024-12-21T16:30:00Z",
-    isCurrentSession: true
-  },
-  {
-    id: 2,
-    device: "iPhone 15",
-    deviceType: "mobile",
-    browser: "Safari 17.0",
-    location: "Addis Ababa, Ethiopia",
-    ipAddress: "192.168.1.101",
-    lastActivity: "2024-12-21T15:45:00Z",
-    isCurrentSession: false
-  }
-];
-
-const securityAlerts = [
-  {
-    id: 1,
-    type: "suspicious_login",
-    title: "Suspicious login attempt blocked",
-    description: "Login attempt from unusual location (Lagos, Nigeria) was automatically blocked",
-    timestamp: "2024-12-19T11:30:00Z",
-    severity: "high",
-    resolved: true
-  },
-  {
-    id: 2,
-    type: "failed_login",
-    title: "Multiple failed login attempts",
-    description: "3 consecutive failed login attempts from Dire Dawa, Ethiopia",
-    timestamp: "2024-12-20T14:22:00Z",
-    severity: "medium",
-    resolved: false
-  },
-  {
-    id: 3,
-    type: "new_device",
-    title: "New device login",
-    description: "Successful login from a new iPad Air device",
-    timestamp: "2024-12-19T22:10:00Z",
-    severity: "low",
-    resolved: true
-  }
-];
+import { loginActivityApi, type LoginSession, type SecurityEvent, type SecurityAlert, type DeviceInfo } from "@/services/loginActivityApi";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginActivity() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("history");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDevice, setFilterDevice] = useState("all");
+  const [loading, setLoading] = useState(true);
+  
+  // State for real data
+  const [loginSessions, setLoginSessions] = useState<LoginSession[]>([]);
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
+  const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
+  const [trustedDevices, setTrustedDevices] = useState<DeviceInfo[]>([]);
+  const [stats, setStats] = useState({
+    total_sessions: 0,
+    active_sessions: 0,
+    suspicious_sessions: 0,
+    trusted_devices: 0,
+    security_events: 0,
+    unresolved_alerts: 0
+  });
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [
+        sessionsData,
+        eventsData,
+        alertsData,
+        devicesData,
+        statsData
+      ] = await Promise.all([
+        loginActivityApi.getLoginSessions(),
+        loginActivityApi.getSecurityEvents(),
+        loginActivityApi.getSecurityAlerts(),
+        loginActivityApi.getTrustedDevices(),
+        loginActivityApi.getLoginStats()
+      ]);
+
+      setLoginSessions(sessionsData.sessions);
+      setSecurityEvents(eventsData.events);
+      setSecurityAlerts(alertsData.alerts);
+      setTrustedDevices(devicesData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading login activity data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load login activity data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTerminateSession = async (sessionId: string) => {
+    try {
+      await loginActivityApi.terminateSession(sessionId);
+      toast({
+        title: "Success",
+        description: "Session terminated successfully."
+      });
+      await loadData();
+    } catch (error) {
+      console.error('Error terminating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to terminate session.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateDeviceTrust = async (deviceId: string, isTrusted: boolean) => {
+    try {
+      await loginActivityApi.updateDeviceTrustStatus(deviceId, isTrusted);
+      toast({
+        title: "Success",
+        description: `Device ${isTrusted ? 'trusted' : 'untrusted'} successfully.`
+      });
+      await loadData();
+    } catch (error) {
+      console.error('Error updating device trust:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update device trust status.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const tabs = [
     { id: "history", label: "Login History", icon: Clock },
@@ -169,29 +134,22 @@ export default function LoginActivity() {
     { id: "alerts", label: "Security Alerts", icon: AlertTriangle }
   ];
 
-  const getDeviceIcon = (deviceType: string) => {
-    switch (deviceType) {
-      case "desktop": return Monitor;
-      case "mobile": return Smartphone;
-      case "tablet": return Tablet;
-      default: return Globe;
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "success": return "text-green-400";
-      case "failed": return "text-red-400";
-      case "blocked": return "text-red-400";
+      case "active": return "text-green-400";
+      case "expired": return "text-yellow-400";
+      case "terminated": return "text-gray-400";
+      case "suspicious": return "text-red-400";
       default: return "text-muted-foreground";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "success": return CheckCircle;
-      case "failed": return XCircle;
-      case "blocked": return Shield;
+      case "active": return CheckCircle;
+      case "expired": return Clock;
+      case "terminated": return XCircle;
+      case "suspicious": return Shield;
       default: return Clock;
     }
   };
@@ -201,20 +159,33 @@ export default function LoginActivity() {
       case "high": return "bg-red-500/20 text-red-400 border-red-500/30";
       case "medium": return "bg-amber-500/20 text-amber-400 border-amber-500/30";
       case "low": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "critical": return "bg-red-600/20 text-red-300 border-red-600/30";
       default: return "bg-muted text-muted-foreground border-border";
     }
   };
 
-  const filteredHistory = loginHistory.filter(entry => {
-    const matchesStatus = filterStatus === "all" || entry.status === filterStatus;
-    const matchesDevice = filterDevice === "all" || entry.deviceType === filterDevice;
+  const filteredSessions = loginSessions.filter(session => {
+    const matchesStatus = filterStatus === "all" || session.status === filterStatus;
+    const matchesDevice = filterDevice === "all" || 
+      session.device_info?.type === filterDevice ||
+      (session.user_agent && session.user_agent.toLowerCase().includes(filterDevice));
     return matchesStatus && matchesDevice;
   });
 
-  const successfulLogins = loginHistory.filter(entry => entry.status === "success").length;
-  const failedAttempts = loginHistory.filter(entry => entry.status === "failed" || entry.status === "blocked").length;
-  const suspiciousActivity = loginHistory.filter(entry => entry.suspicious).length;
-  const uniqueLocations = [...new Set(loginHistory.map(entry => entry.location))].length;
+  if (loading) {
+    return (
+      <PageLayout 
+        title="Login Activity" 
+        subtitle="Monitor your account security and login history"
+        currentPath={location.pathname}
+        onNavigate={navigate}
+      >
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout 
@@ -227,10 +198,10 @@ export default function LoginActivity() {
         {/* Security Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { label: "Successful Logins", value: successfulLogins.toString(), icon: CheckCircle, color: "text-green-400" },
-            { label: "Failed Attempts", value: failedAttempts.toString(), icon: XCircle, color: "text-red-400" },
-            { label: "Active Sessions", value: activeSessions.length.toString(), icon: Monitor, color: "text-blue-400" },
-            { label: "Security Alerts", value: securityAlerts.filter(a => !a.resolved).length.toString(), icon: AlertTriangle, color: "text-amber-400" }
+            { label: "Total Sessions", value: stats.total_sessions.toString(), icon: CheckCircle, color: "text-green-400" },
+            { label: "Active Sessions", value: stats.active_sessions.toString(), icon: Monitor, color: "text-blue-400" },
+            { label: "Suspicious Sessions", value: stats.suspicious_sessions.toString(), icon: XCircle, color: "text-red-400" },
+            { label: "Security Alerts", value: stats.unresolved_alerts.toString(), icon: AlertTriangle, color: "text-amber-400" }
           ].map((stat, index) => (
             <div 
               key={stat.label}

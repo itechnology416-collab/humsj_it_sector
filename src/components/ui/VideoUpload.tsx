@@ -57,7 +57,7 @@ export default function VideoUpload({
   const [mutedVideos, setMutedVideos] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     // Check file type
     if (!acceptedFormats.includes(file.type)) {
       toast.error(`Invalid file format. Accepted formats: ${acceptedFormats.join(', ')}`);
@@ -71,7 +71,7 @@ export default function VideoUpload({
     }
 
     return true;
-  };
+  }, [acceptedFormats, maxSize]);
 
   const handleFileUpload = useCallback(async (files: FileList) => {
     if (disabled) return;
@@ -112,7 +112,7 @@ export default function VideoUpload({
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [disabled, multiple, onMultipleUpload, onVideoUpload, folder, maxSize, acceptedFormats]);
+  }, [disabled, multiple, onMultipleUpload, onVideoUpload, folder, validateFile]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();

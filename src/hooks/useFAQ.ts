@@ -207,7 +207,7 @@ export const useFAQ = () => {
 
       setFaqs(formattedFAQs);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching FAQs:', err);
       setError(err.message || 'Failed to fetch FAQs');
       
@@ -279,7 +279,7 @@ export const useFAQ = () => {
       toast.success('FAQ created successfully!');
       return newFAQ;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating FAQ:', err);
       toast.error(err.message || 'Failed to create FAQ');
       return null;
@@ -318,7 +318,7 @@ export const useFAQ = () => {
       toast.success('FAQ updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating FAQ:', err);
       toast.error(err.message || 'Failed to update FAQ');
       return false;
@@ -348,7 +348,7 @@ export const useFAQ = () => {
       toast.success('FAQ deleted successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting FAQ:', err);
       toast.error(err.message || 'Failed to delete FAQ');
       return false;
@@ -377,7 +377,7 @@ export const useFAQ = () => {
         faq.id === faqId ? { ...faq, view_count: faq.view_count + 1 } : faq
       ));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error tracking view:', err);
     }
   }, [useMockData]);
@@ -408,7 +408,7 @@ export const useFAQ = () => {
       toast.success('Thank you for your feedback!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error marking helpful:', err);
       toast.error('Failed to submit feedback');
       return false;
@@ -465,7 +465,7 @@ export const useFAQ = () => {
       toast.success('FAQ order updated successfully!');
       return true;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error reordering FAQs:', err);
       toast.error(err.message || 'Failed to update FAQ order');
       return false;

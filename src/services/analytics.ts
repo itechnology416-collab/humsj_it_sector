@@ -4,7 +4,7 @@ import { errorHandler, ErrorCategory, ErrorSeverity } from './errorHandler';
 export interface AnalyticsEvent {
   name: string;
   category: 'user_action' | 'navigation' | 'feature_usage' | 'performance' | 'error' | 'islamic_activity';
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   timestamp: number;
   userId?: string;
   sessionId: string;
@@ -148,8 +148,8 @@ export class AnalyticsService {
       this.observePerformanceEntry('layout-shift', (entries) => {
         let clsValue = 0;
         for (const entry of entries) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
+          if (!(entry as unknown).hadRecentInput) {
+            clsValue += (entry as unknown).value;
           }
         }
         if (clsValue > 0) {
@@ -192,7 +192,7 @@ export class AnalyticsService {
   trackEvent(
     name: string, 
     category: AnalyticsEvent['category'], 
-    properties?: Record<string, any>,
+    properties?: Record<string, unknown>,
     userId?: string
   ): void {
     if (!this.enabled) return;
@@ -253,7 +253,7 @@ export class AnalyticsService {
     });
   }
 
-  trackFeatureUsage(featureName: string, action: string, metadata?: Record<string, any>): void {
+  trackFeatureUsage(featureName: string, action: string, metadata?: Record<string, unknown>): void {
     this.trackEvent('feature_usage', 'feature_usage', {
       feature: featureName,
       action,
@@ -269,7 +269,7 @@ export class AnalyticsService {
     });
   }
 
-  trackConversion(type: string, value?: number, metadata?: Record<string, any>): void {
+  trackConversion(type: string, value?: number, metadata?: Record<string, unknown>): void {
     this.trackEvent('conversion', 'user_action', {
       type,
       value,
@@ -365,7 +365,7 @@ export class AnalyticsService {
   }
 
   // A/B Testing support
-  trackExperiment(experimentName: string, variant: string, metadata?: Record<string, any>): void {
+  trackExperiment(experimentName: string, variant: string, metadata?: Record<string, unknown>): void {
     this.trackEvent('experiment_exposure', 'feature_usage', {
       experiment: experimentName,
       variant,
@@ -374,11 +374,11 @@ export class AnalyticsService {
   }
 
   // Custom dimensions
-  setCustomDimension(key: string, value: any): void {
+  setCustomDimension(key: string, value: unknown): void {
     if (!this.currentSession.location) {
       this.currentSession.location = { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
     }
-    (this.currentSession.location as any)[key] = value;
+    (this.currentSession.location as unknown)[key] = value;
   }
 
   // Cleanup
@@ -400,9 +400,9 @@ export const analytics = AnalyticsService.getInstance();
 
 // Convenience functions for common tracking scenarios
 export const trackPageView = (path: string, title?: string) => analytics.trackPageView(path, title);
-export const trackEvent = (name: string, category: AnalyticsEvent['category'], properties?: Record<string, any>) => 
+export const trackEvent = (name: string, category: AnalyticsEvent['category'], properties?: Record<string, unknown>) => 
   analytics.trackEvent(name, category, properties);
-export const trackFeatureUsage = (feature: string, action: string, metadata?: Record<string, any>) => 
+export const trackFeatureUsage = (feature: string, action: string, metadata?: Record<string, unknown>) => 
   analytics.trackFeatureUsage(feature, action, metadata);
 export const trackPrayerActivity = (prayer: string, action: 'completed' | 'reminded' | 'missed', onTime?: boolean) => 
   analytics.trackPrayerActivity(prayer, action, onTime);

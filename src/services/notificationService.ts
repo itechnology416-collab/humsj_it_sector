@@ -8,7 +8,7 @@ export interface NotificationOptions {
   badge?: string;
   image?: string;
   tag?: string;
-  data?: any;
+  data?: unknown;
   requireInteraction?: boolean;
   silent?: boolean;
   vibrate?: number[];
@@ -443,7 +443,7 @@ export class NotificationService {
       const stored = localStorage.getItem('scheduled_notifications');
       if (stored) {
         const notifications = JSON.parse(stored);
-        notifications.forEach((n: any) => {
+        notifications.forEach((n: unknown) => {
           const notification: ScheduledNotification = {
             ...n,
             scheduledTime: new Date(n.scheduledTime),

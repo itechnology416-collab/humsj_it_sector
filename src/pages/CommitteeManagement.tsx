@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommittees } from "@/hooks/useCommittees";
 import { PageLayout } from "@/components/layout/PageLayout";
+import {
+  getCommittees,
+  getCommitteeStatistics,
+  getCommitteeMembers,
+  type Committee,
+  type CommitteeMember,
+  type CommitteeFilters
+} from "@/services/committeeApi";
 import { 
   Users, 
   Crown, 
@@ -15,7 +22,8 @@ import {
   Search,
   Mail,
   Phone,
-  Award
+  Award,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,19 +40,60 @@ export default function CommitteeManagement() {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    committees,
-    stats,
-    loading,
-    error,
-    useMockData,
-    fetchCommittees,
-    getCommitteeMembers
-  } = useCommittees();
   
+  // State for data
+  const [committees, setCommittees] = useState<Committee[]>([]);
+  const [stats, setStats] = useState({
+    totalCommittees: 0,
+    activeCommittees: 0,
+    totalMembers: 0,
+    executiveCommittees: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // UI state
   const [selectedType, setSelectedType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCommittee, setSelectedCommittee] = useState<any>(null);
+  const [selectedCommittee, setSelectedCommittee] = useState<Committee | null>(null);
+  const [committeeMembers, setCommitteeMembers] = useState<CommitteeMember[]>([]);
+
+  // Load data
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [committeesResponse, statsResponse] = await Promise.all([
+        getCommittees({}, 1, 50),
+        getCommitteeStatistics()
+      ]);
+
+      setCommittees(committeesResponse.committees);
+      setStats({
+        totalCommittees: statsResponse.totalCommittees,
+        activeCommittees: statsResponse.activeCommittees,
+        totalMembers: statsResponse.totalMembers,
+        executiveCommittees: statsResponse.committeesByType['standing'] || 0
+      });
+    } catch (err: unknown) {
+      console.error('Error loading committee data:', err);
+      setError(err.message || 'Failed to load committee data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load committee members when a committee is selected
+  const loadCommitteeMembers = async (committeeId: string) => {
+    try {
+      const members = await getCommitteeMembers(committeeId);
+      setCommitteeMembers(members);
+    } catch (err: unknown) {
+      console.error('Error loading committee members:', err);
+      toast.error('Failed to load committee members');
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -52,15 +101,27 @@ export default function CommitteeManagement() {
     } else if (!isLoading && user && !isAdmin) {
       toast.error("Access denied. Admin privileges required.");
       navigate("/dashboard");
+    } else if (!isLoading && user && isAdmin) {
+      loadData();
     }
   }, [user, isAdmin, isLoading, navigate]);
+
+  useEffect(() => {
+    if (selectedCommittee) {
+      loadCommitteeMembers(selectedCommittee.id);
+    }
+  }, [selectedCommittee]);
+
+  const handleSelectCommittee = (committee: Committee) => {
+    setSelectedCommittee(committee);
+  };
 
   const filteredCommittees = committees.filter(committee => {
     const matchesType = selectedType === "all" || committee.type === selectedType;
     const matchesSearch = searchQuery === "" || 
       committee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (committee.chairperson_name && committee.chairperson_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      committee.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (committee.chair_profile?.full_name && committee.chair_profile.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (committee.description && committee.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesType && matchesSearch;
   });
 
@@ -94,7 +155,10 @@ export default function CommitteeManagement() {
   if (isLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading committee data...</p>
+        </div>
       </div>
     );
   }
@@ -113,7 +177,7 @@ export default function CommitteeManagement() {
           <AlertTriangle size={48} className="mx-auto text-red-400 mb-4" />
           <h3 className="text-lg font-medium mb-2">Error Loading Data</h3>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button onClick={() => fetchCommittees()}>Try Again</Button>
+          <Button onClick={() => loadData()}>Try Again</Button>
         </div>
       </PageLayout>
     );
@@ -127,18 +191,19 @@ export default function CommitteeManagement() {
       onNavigate={navigate}
     >
       <div className="space-y-6 animate-fade-in">
-        {/* Mock Data Warning */}
-        {useMockData && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-amber-600">
-              <AlertTriangle size={16} />
-              <span className="text-sm font-medium">Using Mock Data</span>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <div className="flex-1">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
             </div>
-            <p className="text-sm text-amber-600/80 mt-1">
-              Database tables not found. Please run the database migrations to enable full functionality.
-            </p>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+              ×
+            </Button>
           </div>
         )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex items-center gap-4">
@@ -161,11 +226,11 @@ export default function CommitteeManagement() {
               Leadership
             </Button>
             <Button
-              onClick={() => toast.info("Committee creation form would open")}
+              onClick={() => loadData()}
               className="bg-primary hover:bg-primary/90 gap-2"
             >
               <Plus size={16} />
-              Create Committee
+              Refresh Data
             </Button>
           </div>
         </div>
@@ -234,7 +299,7 @@ export default function CommitteeManagement() {
                       selectedCommittee?.id === committee.id && "border-primary/50 bg-primary/5"
                     )}
                     style={{ animationDelay: `${index * 100}ms` }}
-                    onClick={() => setSelectedCommittee(committee)}
+                    onClick={() => handleSelectCommittee(committee)}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4">
@@ -255,15 +320,15 @@ export default function CommitteeManagement() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Crown size={14} />
-                              {committee.chairperson_name || 'Not assigned'}
+                              {committee.chair_profile?.full_name || 'Not assigned'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Users size={14} />
-                              {committee.member_count || 0} members
+                              {committee.current_members || 0} members
                             </span>
                             <span className="flex items-center gap-1">
                               <Calendar size={14} />
-                              {committee.meeting_schedule || 'Not scheduled'}
+                              {committee.meeting_frequency || 'Not scheduled'}
                             </span>
                           </div>
                         </div>
@@ -293,28 +358,28 @@ export default function CommitteeManagement() {
                       </div>
                       <div>
                         <h3 className="font-display text-lg">{selectedCommittee.name}</h3>
-                        <p className="text-sm text-muted-foreground">{selectedCommittee.member_count || 0} members</p>
+                        <p className="text-sm text-muted-foreground">{selectedCommittee.current_members || 0} members</p>
                       </div>
                     </div>
                     
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Chairperson:</span>
-                        <span className="font-medium">{selectedCommittee.chairperson_name || 'Not assigned'}</span>
+                        <span className="font-medium">{selectedCommittee.chair_profile?.full_name || 'Not assigned'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Established:</span>
-                        <span>{new Date(selectedCommittee.established_date).toLocaleDateString()}</span>
+                        <span>{selectedCommittee.established_date ? new Date(selectedCommittee.established_date).toLocaleDateString() : 'N/A'}</span>
                       </div>
-                      {selectedCommittee.term_end_date && (
+                      {selectedCommittee.dissolution_date && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Term Ends:</span>
-                          <span>{new Date(selectedCommittee.term_end_date).toLocaleDateString()}</span>
+                          <span>{new Date(selectedCommittee.dissolution_date).toLocaleDateString()}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Meetings:</span>
-                        <span>{selectedCommittee.meeting_schedule || 'Not scheduled'}</span>
+                        <span>{selectedCommittee.meeting_frequency || 'Not scheduled'}</span>
                       </div>
                     </div>
                   </div>
@@ -322,32 +387,38 @@ export default function CommitteeManagement() {
                   <div className="p-6 border-b border-border/30">
                     <h4 className="font-medium mb-3">Responsibilities</h4>
                     <div className="space-y-2">
-                      {selectedCommittee.responsibilities && selectedCommittee.responsibilities.map((responsibility: string, index: number) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <CheckCircle size={14} className="text-green-400" />
-                          <span className="text-sm">{responsibility}</span>
-                        </div>
-                      ))}
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-400" />
+                        <span className="text-sm">Committee oversight and management</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-400" />
+                        <span className="text-sm">Strategic planning and decision making</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-400" />
+                        <span className="text-sm">Meeting coordination and facilitation</span>
+                      </div>
                     </div>
                   </div>
                   
                   <div className="p-6">
                     <h4 className="font-medium mb-3">Members</h4>
                     <div className="space-y-3">
-                      {getCommitteeMembers(selectedCommittee.id).map((member: any) => (
+                      {committeeMembers.map((member) => (
                         <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
                           <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                             <User size={16} className="text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{member.member_name || 'Unknown'}</p>
+                            <p className="text-sm font-medium truncate">{member.user_profile?.full_name || 'Unknown'}</p>
                             <p className="text-xs text-muted-foreground">{member.role}</p>
                           </div>
                           <div className="flex gap-1">
                             <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
                               <Mail size={12} />
                             </Button>
-                            {member.phone && (
+                            {member.user_profile?.phone && (
                               <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
                                 <Phone size={12} />
                               </Button>
@@ -355,7 +426,7 @@ export default function CommitteeManagement() {
                           </div>
                         </div>
                       ))}
-                      {getCommitteeMembers(selectedCommittee.id).length === 0 && (
+                      {committeeMembers.length === 0 && (
                         <div className="text-center py-4 text-muted-foreground">
                           <Users size={24} className="mx-auto mb-2" />
                           <p className="text-sm">No members assigned yet</p>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Minus, 
@@ -11,153 +11,157 @@ import {
   Star,
   Zap,
   Volume2,
-  VolumeX
+  VolumeX,
+  Settings,
+  TrendingUp,
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { dhikrApi, DhikrType, DhikrSession, DhikrSettings, DhikrStreak, DhikrStatistics } from '@/services/dhikrApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface DhikrCounterProps {
   className?: string;
 }
 
-interface DhikrType {
-  id: string;
-  name: string;
-  arabicText: string;
-  transliteration: string;
-  translation: string;
-  target: number;
-  reward: string;
-  category: 'tasbih' | 'istighfar' | 'salawat' | 'dua' | 'quran';
-}
-
-const DHIKR_TYPES: DhikrType[] = [
-  {
-    id: 'subhanallah',
-    name: 'SubhanAllah',
-    arabicText: 'سُبْحَانَ اللَّهِ',
-    transliteration: 'Subhan Allah',
-    translation: 'Glory be to Allah',
-    target: 33,
-    reward: 'Each tasbih is rewarded',
-    category: 'tasbih'
-  },
-  {
-    id: 'alhamdulillah',
-    name: 'Alhamdulillah',
-    arabicText: 'الْحَمْدُ لِلَّهِ',
-    transliteration: 'Alhamdulillah',
-    translation: 'All praise is due to Allah',
-    target: 33,
-    reward: 'Fills the scales of good deeds',
-    category: 'tasbih'
-  },
-  {
-    id: 'allahu-akbar',
-    name: 'Allahu Akbar',
-    arabicText: 'اللَّهُ أَكْبَرُ',
-    transliteration: 'Allahu Akbar',
-    translation: 'Allah is the Greatest',
-    target: 34,
-    reward: 'Beloved to Ar-Rahman',
-    category: 'tasbih'
-  },
-  {
-    id: 'la-hawla',
-    name: 'La Hawla wa la Quwwata',
-    arabicText: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
-    transliteration: 'La hawla wa la quwwata illa billah',
-    translation: 'There is no power except with Allah',
-    target: 100,
-    reward: 'Treasure from Paradise',
-    category: 'dua'
-  },
-  {
-    id: 'istighfar',
-    name: 'Istighfar',
-    arabicText: 'أَسْتَغْفِرُ اللَّهَ',
-    transliteration: 'Astaghfirullah',
-    translation: 'I seek forgiveness from Allah',
-    target: 100,
-    reward: 'Opens doors of mercy',
-    category: 'istighfar'
-  },
-  {
-    id: 'salawat',
-    name: 'Salawat on Prophet ﷺ',
-    arabicText: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ',
-    transliteration: 'Allahumma salli ala Muhammad',
-    translation: 'O Allah, send blessings upon Muhammad',
-    target: 100,
-    reward: 'Allah sends 10 blessings in return',
-    category: 'salawat'
-  }
-];
-
 export default function DhikrCounter({ className }: DhikrCounterProps) {
-  const [selectedDhikr, setSelectedDhikr] = useState(DHIKR_TYPES[0]);
+  const { user } = useAuth();
+  
+  // State management
+  const [dhikrTypes, setDhikrTypes] = useState<DhikrType[]>([]);
+  const [selectedDhikr, setSelectedDhikr] = useState<DhikrType | null>(null);
+  const [currentSession, setCurrentSession] = useState<DhikrSession | null>(null);
+  const [settings, setSettings] = useState<DhikrSettings | null>(null);
+  const [streaks, setStreaks] = useState<DhikrStreak[]>([]);
+  const [statistics, setStatistics] = useState<DhikrStatistics[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+
+  // Local state for real-time updates
   const [count, setCount] = useState(0);
-  const [dailyGoal, setDailyGoal] = useState(selectedDhikr.target);
-  const [totalCount, setTotalCount] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [dailyGoal, setDailyGoal] = useState(33);
 
-  // Load saved data from localStorage
+  // Load initial data
   useEffect(() => {
-    const savedData = localStorage.getItem(`dhikr-${selectedDhikr.id}`);
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      setCount(data.count || 0);
-      setTotalCount(data.totalCount || 0);
-      setStreak(data.streak || 0);
-      setDailyGoal(data.dailyGoal || selectedDhikr.target);
-    } else {
-      setCount(0);
-      setDailyGoal(selectedDhikr.target);
+    if (user) {
+      loadInitialData();
     }
-  }, [selectedDhikr]);
+  }, [user, loadInitialData]);
 
-  // Save data to localStorage
+  // Update session when count changes
   useEffect(() => {
-    const data = {
-      count,
-      totalCount,
-      streak,
-      dailyGoal,
-      lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem(`dhikr-${selectedDhikr.id}`, JSON.stringify(data));
-  }, [count, totalCount, streak, dailyGoal, selectedDhikr.id]);
+    if (selectedDhikr && count !== (currentSession?.count || 0)) {
+      const timeoutId = setTimeout(() => {
+        updateSession();
+      }, 1000); // Debounce updates
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [count, selectedDhikr, currentSession?.count, updateSession]);
+
+  const loadInitialData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Load dhikr types
+      const types = await dhikrApi.getDhikrTypes();
+      setDhikrTypes(types);
+      
+      // Load user settings
+      const userSettings = await dhikrApi.getUserSettings();
+      setSettings(userSettings);
+      
+      // Set initial dhikr type
+      const initialDhikr = userSettings.preferred_dhikr_type || types[0];
+      if (initialDhikr) {
+        await selectDhikrType(initialDhikr);
+      }
+      
+      // Load streaks and statistics
+      const [userStreaks, userStats] = await Promise.all([
+        dhikrApi.getUserStreaks(),
+        dhikrApi.getUserStatistics()
+      ]);
+      
+      setStreaks(userStreaks);
+      setStatistics(userStats);
+      
+    } catch (error) {
+      console.error('Error loading dhikr data:', error);
+      toast.error('Failed to load dhikr data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const selectDhikrType = async (dhikr: DhikrType) => {
+    try {
+      setSelectedDhikr(dhikr);
+      setDailyGoal(dhikr.default_target);
+      
+      // Load today's session for this dhikr type
+      const session = await dhikrApi.getTodaySession(dhikr.id);
+      setCurrentSession(session);
+      setCount(session?.count || 0);
+      
+      if (session) {
+        setDailyGoal(session.target);
+      }
+    } catch (error) {
+      console.error('Error selecting dhikr type:', error);
+      toast.error('Failed to load dhikr session');
+    }
+  };
+
+  const updateSession = useCallback(async () => {
+    if (!selectedDhikr || updating) return;
+    
+    try {
+      setUpdating(true);
+      
+      const sessionData = {
+        dhikr_type_id: selectedDhikr.id,
+        count: count,
+        target: dailyGoal,
+        session_duration_minutes: Math.floor((Date.now() - (currentSession?.created_at ? new Date(currentSession.created_at).getTime() : Date.now())) / 60000)
+      };
+      
+      const updatedSession = await dhikrApi.createOrUpdateSession(sessionData);
+      setCurrentSession(updatedSession);
+      
+      // Refresh streaks and statistics
+      const [userStreaks, userStats] = await Promise.all([
+        dhikrApi.getUserStreaks(),
+        dhikrApi.getUserStatistics()
+      ]);
+      
+      setStreaks(userStreaks);
+      setStatistics(userStats);
+      
+    } catch (error) {
+      console.error('Error updating session:', error);
+      toast.error('Failed to save progress');
+    } finally {
+      setUpdating(false);
+    }
+  }, [selectedDhikr, updating, count, dailyGoal, currentSession?.created_at]);
 
   const increment = () => {
     const newCount = count + 1;
     setCount(newCount);
-    setTotalCount(prev => prev + 1);
 
     // Sound feedback
-    if (soundEnabled) {
-      // Create a simple beep sound
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = newCount % dailyGoal === 0 ? 800 : 400;
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
+    if (settings?.sound_enabled) {
+      playSound(newCount % dailyGoal === 0 ? 800 : 400);
     }
 
     // Vibration feedback
-    if (vibrationEnabled && 'vibrate' in navigator) {
+    if (settings?.vibration_enabled && 'vibrate' in navigator) {
       if (newCount % dailyGoal === 0) {
         navigator.vibrate([100, 50, 100]); // Goal reached pattern
       } else if (newCount % 10 === 0) {
@@ -166,12 +170,16 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
         navigator.vibrate(20); // Regular count
       }
     }
+
+    // Show achievement toast for goal completion
+    if (newCount === dailyGoal) {
+      toast.success('🎉 Daily goal completed! Barakallahu feeki!');
+    }
   };
 
   const decrement = () => {
     if (count > 0) {
       setCount(count - 1);
-      setTotalCount(prev => Math.max(0, prev - 1));
     }
   };
 
@@ -179,15 +187,63 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
     setCount(0);
   };
 
-  const resetAll = () => {
-    setCount(0);
-    setTotalCount(0);
-    setStreak(0);
-    localStorage.removeItem(`dhikr-${selectedDhikr.id}`);
+  const resetAll = async () => {
+    if (!selectedDhikr) return;
+    
+    try {
+      setCount(0);
+      await dhikrApi.createOrUpdateSession({
+        dhikr_type_id: selectedDhikr.id,
+        count: 0,
+        target: dailyGoal
+      });
+      
+      toast.success('Counter reset successfully');
+    } catch (error) {
+      console.error('Error resetting counter:', error);
+      toast.error('Failed to reset counter');
+    }
+  };
+
+  const updateSettings = async (newSettings: Partial<DhikrSettings>) => {
+    try {
+      const updatedSettings = await dhikrApi.updateUserSettings(newSettings);
+      setSettings(updatedSettings);
+      toast.success('Settings updated successfully');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update settings');
+    }
+  };
+
+  const playSound = (frequency: number) => {
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+      console.error('Error playing sound:', error);
+    }
   };
 
   const progress = Math.min((count / dailyGoal) * 100, 100);
   const isGoalReached = count >= dailyGoal;
+  
+  // Get current streak for selected dhikr
+  const currentStreak = selectedDhikr ? streaks.find(s => s.dhikr_type_id === selectedDhikr.id) : null;
+  
+  // Get statistics for selected dhikr
+  const currentStats = selectedDhikr ? statistics.find(s => s.dhikr_type_id === selectedDhikr.id) : null;
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -210,6 +266,31 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
       default: return 'text-green-500 bg-green-500/20';
     }
   };
+
+  if (loading) {
+    return (
+      <div className={cn("space-y-6", className)}>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading your dhikr data...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!selectedDhikr) {
+    return (
+      <div className={cn("space-y-6", className)}>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">No dhikr types available</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const CategoryIcon = getCategoryIcon(selectedDhikr.category);
 
@@ -239,15 +320,15 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
           <Select 
             value={selectedDhikr.id} 
             onValueChange={(value) => {
-              const dhikr = DHIKR_TYPES.find(d => d.id === value);
-              if (dhikr) setSelectedDhikr(dhikr);
+              const dhikr = dhikrTypes.find(d => d.id === value);
+              if (dhikr) selectDhikrType(dhikr);
             }}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DHIKR_TYPES.map((dhikr) => (
+              {dhikrTypes.map((dhikr) => (
                 <SelectItem key={dhikr.id} value={dhikr.id}>
                   <div className="flex items-center gap-3">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", getCategoryColor(dhikr.category))}>
@@ -274,14 +355,14 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
           </div>
           
           <h2 className="text-3xl font-arabic text-primary mb-2" dir="rtl">
-            {selectedDhikr.arabicText}
+            {selectedDhikr.arabic_text}
           </h2>
           
           <p className="text-lg font-semibold mb-1">{selectedDhikr.transliteration}</p>
           <p className="text-sm text-muted-foreground mb-4">{selectedDhikr.translation}</p>
           
           <Badge variant="outline" className="text-xs">
-            {selectedDhikr.reward}
+            {selectedDhikr.reward_description}
           </Badge>
         </CardContent>
       </Card>
@@ -402,7 +483,7 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mx-auto mb-2">
               <Zap size={20} className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold">{totalCount}</p>
+            <p className="text-2xl font-bold">{currentStats?.total_count || 0}</p>
             <p className="text-xs text-muted-foreground">Total</p>
           </CardContent>
         </Card>
@@ -412,7 +493,7 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
             <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
               <Trophy size={20} className="text-amber-500" />
             </div>
-            <p className="text-2xl font-bold">{streak}</p>
+            <p className="text-2xl font-bold">{currentStreak?.current_streak || 0}</p>
             <p className="text-xs text-muted-foreground">Day Streak</p>
           </CardContent>
         </Card>
@@ -437,7 +518,7 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                {soundEnabled ? <Volume2 size={20} className="text-blue-500" /> : <VolumeX size={20} className="text-blue-500" />}
+                {settings?.sound_enabled ? <Volume2 size={20} className="text-blue-500" /> : <VolumeX size={20} className="text-blue-500" />}
               </div>
               <div>
                 <p className="font-medium">Sound Feedback</p>
@@ -447,10 +528,10 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={soundEnabled ? "bg-primary/10 border-primary/30" : ""}
+              onClick={() => updateSettings({ sound_enabled: !settings?.sound_enabled })}
+              className={settings?.sound_enabled ? "bg-primary/10 border-primary/30" : ""}
             >
-              {soundEnabled ? "On" : "Off"}
+              {settings?.sound_enabled ? "On" : "Off"}
             </Button>
           </div>
 
@@ -467,10 +548,10 @@ export default function DhikrCounter({ className }: DhikrCounterProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setVibrationEnabled(!vibrationEnabled)}
-              className={vibrationEnabled ? "bg-primary/10 border-primary/30" : ""}
+              onClick={() => updateSettings({ vibration_enabled: !settings?.vibration_enabled })}
+              className={settings?.vibration_enabled ? "bg-primary/10 border-primary/30" : ""}
             >
-              {vibrationEnabled ? "On" : "Off"}
+              {settings?.vibration_enabled ? "On" : "Off"}
             </Button>
           </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { ProtectedPageLayout } from "@/components/layout/ProtectedPageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, 
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   if (!user) return null;
 
   return (
-    <PageLayout 
+    <ProtectedPageLayout 
       title="Settings" 
       subtitle="Manage your account preferences"
       currentPath={location.pathname}
@@ -101,7 +101,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </PageLayout>
+    </ProtectedPageLayout>
   );
 }
 

@@ -314,7 +314,7 @@ export default function DonationsPage() {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as unknown)}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-red"
@@ -417,7 +417,7 @@ export default function DonationsPage() {
                   className="bg-card rounded-xl p-6 border border-border/30 hover:border-primary/30 transition-all duration-300 hover:scale-105 animate-slide-up cursor-pointer"
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => {
-                    setDonationForm(prev => ({ ...prev, donation_type: type.value as any }));
+                    setDonationForm(prev => ({ ...prev, donation_type: type.value as unknown }));
                     setIsDonateModalOpen(true);
                   }}
                 >
@@ -635,7 +635,7 @@ export default function DonationsPage() {
                 </div>
                 <div>
                   <Label htmlFor="donation_type">Donation Type</Label>
-                  <Select value={donationForm.donation_type} onValueChange={(value) => setDonationForm(prev => ({ ...prev, donation_type: value as any }))}>
+                  <Select value={donationForm.donation_type} onValueChange={(value) => setDonationForm(prev => ({ ...prev, donation_type: value as unknown }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -650,7 +650,7 @@ export default function DonationsPage() {
 
               <div>
                 <Label htmlFor="payment_method">Payment Method</Label>
-                <Select value={donationForm.payment_method} onValueChange={(value) => setDonationForm(prev => ({ ...prev, payment_method: value as any }))}>
+                <Select value={donationForm.payment_method} onValueChange={(value) => setDonationForm(prev => ({ ...prev, payment_method: value as unknown }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

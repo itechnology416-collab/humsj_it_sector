@@ -55,7 +55,7 @@ export default function ImageUpload({
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     // Check file type
     if (!acceptedFormats.includes(file.type)) {
       toast.error(`Invalid file format. Accepted formats: ${acceptedFormats.join(', ')}`);
@@ -69,7 +69,7 @@ export default function ImageUpload({
     }
 
     return true;
-  };
+  }, [acceptedFormats, maxSize]);
 
   const handleFileUpload = useCallback(async (files: FileList) => {
     if (disabled) return;
@@ -110,7 +110,7 @@ export default function ImageUpload({
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [disabled, multiple, onMultipleUpload, onImageUpload, folder, maxSize, acceptedFormats]);
+  }, [disabled, multiple, onMultipleUpload, onImageUpload, folder, validateFile]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
